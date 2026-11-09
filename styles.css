@@ -1,0 +1,151 @@
+:root {
+  --background: #fff;
+  --grid: #edf0f2;
+  --table: #5f8f78;
+  --table-highlight: #78a58d;
+  --table-outline: #252323;
+  --ink: #151515;
+  --net: #fffaf0;
+  --ball: #fffdf3;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background-color: var(--background);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 28px 28px;
+  font-family: Arial, sans-serif;
+}
+
+.game {
+  display: grid;
+  min-height: 100vh;
+  min-height: 100svh;
+  place-items: center;
+  padding: 24px;
+}
+
+.scene {
+  position: relative;
+  width: min(60vw, 390px);
+  aspect-ratio: 0.53;
+}
+
+.table {
+  position: absolute;
+  inset: 17% 14%;
+  overflow: hidden;
+  background: var(--table);
+  border: clamp(4px, 0.7vw, 6px) solid var(--table-outline);
+  box-shadow: 7px 8px 0 rgb(184 116 30 / 12%);
+}
+
+.table__center-line {
+  position: absolute;
+  inset: 0 auto 0 48%;
+  width: 5.5%;
+  background: var(--table-highlight);
+}
+
+.net {
+  position: absolute;
+  z-index: 2;
+  top: 48.2%;
+  left: -1%;
+  width: 102%;
+  height: 4.3%;
+  background: var(--net);
+  border-block: clamp(3px, 0.55vw, 5px) solid var(--ink);
+}
+
+.ball {
+  position: absolute;
+  z-index: 5;
+  top: 12%;
+  left: 18%;
+  width: 8.5%;
+  aspect-ratio: 1;
+  background: var(--ball);
+  border: clamp(2px, 0.4vw, 4px) solid var(--ink);
+  border-radius: 50%;
+  box-shadow: 2px 3px 0 rgb(21 21 21 / 12%);
+}
+
+.bounce-ring {
+  position: absolute;
+  z-index: 4;
+  width: 10%;
+  aspect-ratio: 1;
+  border: clamp(1px, 0.3vw, 2px) solid rgb(255 255 255 / 90%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.paddle {
+  position: absolute;
+  z-index: 6;
+  width: 29%;
+  aspect-ratio: 925 / 915;
+}
+
+.paddle__icon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: scaleX(-1);
+}
+
+.paddle__sweet-spot {
+  position: absolute;
+  top: 38%;
+  left: 64%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.paddle--top {
+  top: 1.5%;
+  left: 0;
+  transform: rotate(180deg);
+}
+
+.paddle--bottom {
+  left: 70%;
+  top: auto;
+  bottom: 1%;
+}
+
+@media (max-width: 600px), (max-aspect-ratio: 3 / 4) {
+  .scene {
+    width: min(82vw, 390px);
+  }
+}
+
+@media (max-height: 650px) {
+  .scene {
+    width: min(48vh, 310px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+
+}

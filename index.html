@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Une table de ping-pong minimaliste aux couleurs vives."
+    />
+    <title>KeyPong</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="game" aria-label="Table de ping-pong">
+      <div class="scene" data-game-scene>
+        <div class="table" data-table>
+          <div class="table__center-line" aria-hidden="true"></div>
+          <div class="net" data-net aria-hidden="true"></div>
+        </div>
+
+        <div class="ball" data-ball aria-label="Balle de ping-pong"></div>
+
+        <div class="paddle paddle--top" data-paddle="top" aria-label="Raquette rouge du haut">
+          <img class="paddle__icon" src="raquette.svg" alt="" />
+          <span class="paddle__sweet-spot" data-sweet-spot aria-hidden="true"></span>
+        </div>
+
+        <div class="paddle paddle--bottom" data-paddle="bottom" aria-label="Raquette rouge du bas">
+          <img class="paddle__icon" src="raquette.svg" alt="" />
+          <span class="paddle__sweet-spot" data-sweet-spot aria-hidden="true"></span>
+        </div>
+      </div>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
