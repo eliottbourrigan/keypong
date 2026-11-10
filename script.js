@@ -116,6 +116,9 @@ class PingPongScene {
     });
 
     this.elements.letterGrid.replaceChildren(fragment);
+    this.elements.letterGrid.querySelectorAll(".letter-cell__value").forEach((value) => {
+      this.popLetter(value);
+    });
   }
 
   handleKeyDown(event) {
@@ -361,7 +364,20 @@ class PingPongScene {
     }
 
     row[lane] = nextLetter;
-    this.letterCells[side][role][lane].querySelector(".letter-cell__value").textContent = nextLetter;
+    const value = this.letterCells[side][role][lane].querySelector(".letter-cell__value");
+    value.textContent = nextLetter;
+    this.popLetter(value);
+  }
+
+  popLetter(value) {
+    value.animate(
+      [
+        { transform: "scale(0.65)", opacity: 0 },
+        { transform: "scale(1.18)", opacity: 1, offset: 0.65 },
+        { transform: "scale(1)", opacity: 1 },
+      ],
+      { duration: 210, easing: "cubic-bezier(0.2, 0.85, 0.3, 1)" },
+    );
   }
 
   clearGridHighlights() {
