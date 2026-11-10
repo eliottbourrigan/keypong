@@ -236,15 +236,12 @@ body {
   z-index: 6;
   width: 29%;
   aspect-ratio: 925 / 915;
-  perspective: 420px;
-  transform-style: preserve-3d;
 }
 
 .paddle__body {
   position: absolute;
   inset: 0;
   transform-origin: 50% 60%;
-  transform-style: preserve-3d;
 }
 
 .paddle__icon {
@@ -254,32 +251,7 @@ body {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  transform: translateZ(6px) scaleX(-1);
-}
-
-.paddle__edge {
-  position: absolute;
-  inset: 0;
-  background: var(--table-outline);
-  mask: url("raquette.svg") center / contain no-repeat;
-  pointer-events: none;
-  -webkit-mask: url("raquette.svg") center / contain no-repeat;
-}
-
-.paddle__edge--1 {
-  transform: translate3d(2px, 2px, 2px) scaleX(-1);
-}
-
-.paddle__edge--2 {
-  transform: translate3d(4px, 4px, -2px) scaleX(-1);
-}
-
-.paddle__edge--3 {
-  transform: translate3d(6px, 6px, -6px) scaleX(-1);
-}
-
-.paddle__edge--4 {
-  transform: translate3d(8px, 8px, -10px) scaleX(-1);
+  transform: scaleX(-1);
 }
 
 .paddle__sweet-spot {
