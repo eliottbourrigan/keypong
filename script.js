@@ -126,8 +126,6 @@ class PingPongScene {
       return;
     }
 
-    if (this.isInFlight) return;
-
     if (event.key === "Backspace") {
       if (this.typedWord.length === 0) return;
       event.preventDefault();
@@ -315,6 +313,13 @@ class PingPongScene {
     this.replaceLetter(fromSide, this.wordState.startLetterIndex);
     this.clearGridHighlights();
     this.root.dataset.state = "in-flight";
+    this.positions[targetSide] = targetLetterIndex;
+    this.requiredStartIndex[targetSide] = targetLetterIndex;
+    this.activeSide = targetSide;
+    this.typedWord = "";
+    this.wordState = this.emptyWordState();
+    this.root.dataset.turn = this.activeSide;
+    this.updateWordState();
 
     const bounceProgress = 0.5;
     const bounceLeft = fromTarget.left + (targetTarget.left - fromTarget.left) * bounceProgress;
@@ -347,19 +352,13 @@ class PingPongScene {
       // The final inline position is already set, so a cancelled animation still resolves the turn.
     }
 
-    this.positions[targetSide] = targetLetterIndex;
-    this.requiredStartIndex[targetSide] = targetLetterIndex;
-    this.activeSide = targetSide;
     this.isInFlight = false;
     this.currentAnimations = [];
     if (this.bounceTimer) window.clearTimeout(this.bounceTimer);
     this.bounceTimer = null;
     this.currentBounce = null;
     this.hideShotCallout();
-    this.typedWord = "";
-    this.wordState = this.emptyWordState();
     this.root.dataset.state = "waiting";
-    this.root.dataset.turn = this.activeSide;
     this.updateWordState();
   }
 

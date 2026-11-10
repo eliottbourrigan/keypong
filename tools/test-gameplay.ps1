@@ -76,6 +76,9 @@ $setupExpression = @'
 $setup = Invoke-CdpExpression $setupExpression
 if ($setup.dictionarySize -lt 100000 -or $setup.side -ne "top") { throw "Setup failed" }
 
+$inflectedForms = Invoke-CdpExpression '(() => { const game = window.keypongGame; return ["CHEVAUX", "FINISSENT", "MANGEASSIONS", "MANGERAIENT", "PRENDRIONS", "TRAVAILLERAIS"].every((word) => game.dictionary.has(word)); })()'
+if (-not $inflectedForms) { throw "Inflected French forms are missing from the dictionary" }
+
 $invalidWord = Invoke-CdpExpression '(() => { const game = window.keypongGame; game.typedWord = "AIXZZ"; game.updateWordState(false); return game.wordState; })()'
 if ($invalidWord.valid -or $invalidWord.exists -or $invalidWord.targetLetterIndex -ne 5) { throw "Invalid word handling failed" }
 
@@ -85,8 +88,8 @@ if (-not $uniqueLetters) { throw "A camp received duplicate letters" }
 $firstWord = Invoke-CdpExpression '(() => { const game = window.keypongGame; game.typedWord = "AILE"; game.updateWordState(false); return game.wordState; })()'
 if (-not $firstWord.valid -or $firstWord.startLetterIndex -ne 0 -or $firstWord.targetLetterIndex -ne 5) { throw "AILE validation failed" }
 
-$firstShot = Invoke-CdpExpression 'new Promise((resolve) => { const game = window.keypongGame; game.handleSpacePress(); game.finishCurrentShot(); setTimeout(() => resolve({ side: game.activeSide, lane: game.positions.bottom, startingLetterChanged: game.letters.top[0] !== "A", targetLetterUnchanged: game.letters.bottom[5] === "I", requiredStart: game.requiredStartIndex.bottom }), 20); })'
-if ($firstShot.side -ne "bottom" -or $firstShot.lane -ne 5 -or -not $firstShot.startingLetterChanged -or -not $firstShot.targetLetterUnchanged -or $firstShot.requiredStart -ne 5) { throw "First shot failed" }
+$firstShot = Invoke-CdpExpression 'new Promise((resolve) => { const game = window.keypongGame; game.handleSpacePress(); game.typedWord = "ILE"; game.updateWordState(false); const opponentCanType = game.isInFlight && game.activeSide === "bottom" && game.wordState.valid; game.finishCurrentShot(); setTimeout(() => resolve({ side: game.activeSide, lane: game.positions.bottom, startingLetterChanged: game.letters.top[0] !== "A", targetLetterUnchanged: game.letters.bottom[5] === "I", requiredStart: game.requiredStartIndex.bottom, opponentCanType }), 20); })'
+if ($firstShot.side -ne "bottom" -or $firstShot.lane -ne 5 -or -not $firstShot.startingLetterChanged -or -not $firstShot.targetLetterUnchanged -or $firstShot.requiredStart -ne 5 -or -not $firstShot.opponentCanType) { throw "First shot failed" }
 
 $secondWord = Invoke-CdpExpression '(() => { const game = window.keypongGame; game.typedWord = "ILE"; game.updateWordState(false); return game.wordState; })()'
 if (-not $secondWord.valid -or $secondWord.startLetterIndex -ne 5 -or $secondWord.targetLetterIndex -ne 5) { throw "ILE validation failed" }

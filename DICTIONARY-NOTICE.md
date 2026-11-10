@@ -1,16 +1,17 @@
 # French dictionary
 
-`dictionary.js` is generated from **Lexique 3.83**, created by Boris New and
-Christophe Pallier with the contributors credited by the Lexique project.
+`dictionary.js` is generated from the French Hunspell dictionary **Classique
+v7.7**, created by Olivier R. for Grammalecte and distributed with LibreOffice.
 
-- Project: https://www.lexique.org/
-- Source: https://www.lexique.org/databases/Lexique383/Lexique383.zip
-- License: Creative Commons Attribution-ShareAlike 4.0
-- License text: https://creativecommons.org/licenses/by-sa/4.0/
+- Project: https://grammalecte.net/
+- Source: https://github.com/LibreOffice/dictionaries/tree/master/fr_FR/dictionaries
+- License: Mozilla Public License 2.0
+- License text: https://www.mozilla.org/MPL/2.0/
 
-The `ortho` column is normalized to uppercase ASCII, ligatures and diacritics
-are folded, entries containing punctuation or spaces are removed, and duplicate
-forms are discarded. The transformation script is available at
+The generator expands direct Hunspell suffix rules to include plural and verbal
+forms. It retains lowercase lexical entries only, folds ligatures and diacritics
+to uppercase ASCII, excludes punctuation, numbers and words longer than 24
+letters, then removes duplicates. The transformation script is available at
 `tools/build-dictionary.ps1`.
 
-The generated dictionary remains available under CC BY-SA 4.0.
+The generated dictionary remains available under MPL-2.0.
