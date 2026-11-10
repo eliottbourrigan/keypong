@@ -196,8 +196,6 @@ class PingPongScene {
     const playerName = side === "top" ? "Joueur bleu" : "Joueur rouge";
     const playerColor = side === "top" ? "var(--blue)" : "var(--red)";
     const receptionLane = this.positions[side];
-    const receptionLetter = this.letters[side].reception[receptionLane];
-    const sendLetters = this.letters[side].send;
 
     Object.values(this.letterCells).forEach((roles) => {
       Object.values(roles).flat().forEach((cell) => {
@@ -221,8 +219,7 @@ class PingPongScene {
     if (this.dictionary.size === 0) {
       this.elements.wordInstruction.textContent = "Dictionnaire indisponible";
     } else {
-      this.elements.wordInstruction.textContent =
-        `Commence par ${receptionLetter} • vise ${sendLetters.join(", ")} • Espace pour frapper`;
+      this.elements.wordInstruction.textContent = "";
     }
   }
 
@@ -298,7 +295,6 @@ class PingPongScene {
     const spinAnimation = isPowerShot ? this.animatePaddleSpin(fromSide) : null;
     this.consumeLetters(fromSide, fromLaneIndex, targetLaneIndex);
     this.clearGridHighlights();
-    this.elements.wordInstruction.textContent = "Coup en cours...";
     this.root.dataset.state = "in-flight";
 
     const targetTop = targetSide === "top" ? "12%" : "82%";
@@ -535,6 +531,12 @@ class PingPongScene {
       this.audioMaster = this.audioContext.createGain();
       this.audioMaster.gain.value = 0.55;
       this.audioMaster.connect(this.audioContext.destination);
+      console.info("[Keypong audio] context created", {
+        state: this.audioContext.state,
+        baseLatency: this.audioContext.baseLatency,
+        outputLatency: this.audioContext.outputLatency,
+        sampleRate: this.audioContext.sampleRate,
+      });
       this.noiseBuffer = this.audioContext.createBuffer(
         1,
         Math.floor(this.audioContext.sampleRate * 0.08),
@@ -550,7 +552,15 @@ class PingPongScene {
   ensureAudio() {
     this.prepareAudio();
     if (!this.audioContext) return;
-    if (this.audioContext.state === "suspended") this.audioContext.resume();
+    if (this.audioContext.state === "suspended") {
+      this.audioContext.resume().then(() => {
+        console.info("[Keypong audio] context resumed", {
+          state: this.audioContext.state,
+          baseLatency: this.audioContext.baseLatency,
+          outputLatency: this.audioContext.outputLatency,
+        });
+      });
+    }
   }
 
   playTypingSound(length) {
