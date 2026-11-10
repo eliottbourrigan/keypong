@@ -54,18 +54,17 @@ $setupExpression = @'
 (() => {
   const game = window.keypongGame;
   const rows = {
-    top: { reception: ["A", "B", "C"], send: ["G", "H", "I"] },
-    bottom: { reception: ["J", "K", "L"], send: ["D", "E", "F"] }
+    top: ["A", "B", "C", "G", "H", "L"],
+    bottom: ["J", "K", "M", "D", "E", "I"]
   };
   for (const side of ["top", "bottom"]) {
-    for (const role of ["reception", "send"]) {
-      game.letters[side][role] = [...rows[side][role]];
-      game.letterCells[side][role].forEach((cell, lane) => {
-        cell.querySelector(".letter-cell__value").textContent = rows[side][role][lane];
-      });
-    }
+    game.letters[side] = [...rows[side]];
+    game.letterCells[side].forEach((cell, index) => {
+      cell.querySelector(".letter-cell__value").textContent = rows[side][index];
+    });
   }
   game.positions = { top: 0, bottom: 2 };
+  game.requiredStartIndex = { top: null, bottom: null };
   game.activeSide = "top";
   game.typedWord = "";
   game.wordState = game.emptyWordState();
@@ -78,26 +77,30 @@ $setup = Invoke-CdpExpression $setupExpression
 if ($setup.dictionarySize -lt 100000 -or $setup.side -ne "top") { throw "Setup failed" }
 
 $invalidWord = Invoke-CdpExpression '(() => { const game = window.keypongGame; game.typedWord = "AIXZZ"; game.updateWordState(false); return game.wordState; })()'
-if ($invalidWord.valid -or $invalidWord.exists -or $invalidWord.targetLane -ne 2) { throw "Invalid word handling failed" }
+if ($invalidWord.valid -or $invalidWord.exists -or $invalidWord.targetLetterIndex -ne 5) { throw "Invalid word handling failed" }
 
-$hardReceptionLetter = Invoke-CdpExpression '(() => { const game = window.keypongGame; for (let index = 0; index < 500; index += 1) { if (game.generateRow("reception").some((letter) => "KQWXYZ".includes(letter))) return true; } return false; })()'
-if ($hardReceptionLetter) { throw "A hard letter was generated in a reception row" }
+$uniqueLetters = Invoke-CdpExpression '(() => { const game = window.keypongGame; return Array.from({ length: 100 }, () => game.generateLetters()).every((letters) => new Set(letters).size === 6); })()'
+if (-not $uniqueLetters) { throw "A camp received duplicate letters" }
 
 $firstWord = Invoke-CdpExpression '(() => { const game = window.keypongGame; game.typedWord = "AILE"; game.updateWordState(false); return game.wordState; })()'
-if (-not $firstWord.valid -or $firstWord.targetLane -ne 2) { throw "AILE validation failed" }
+if (-not $firstWord.valid -or $firstWord.startLetterIndex -ne 0 -or $firstWord.targetLetterIndex -ne 5) { throw "AILE validation failed" }
 
-$firstShot = Invoke-CdpExpression 'new Promise((resolve) => { const game = window.keypongGame; game.handleSpacePress(); game.finishCurrentShot(); setTimeout(() => resolve({ side: game.activeSide, lane: game.positions.bottom, receptionChanged: game.letters.top.reception[0] !== "A", sendChanged: game.letters.top.send[2] !== "I" }), 20); })'
-if ($firstShot.side -ne "bottom" -or $firstShot.lane -ne 2 -or -not $firstShot.receptionChanged -or -not $firstShot.sendChanged) { throw "First shot failed" }
+$firstShot = Invoke-CdpExpression 'new Promise((resolve) => { const game = window.keypongGame; game.handleSpacePress(); game.finishCurrentShot(); setTimeout(() => resolve({ side: game.activeSide, lane: game.positions.bottom, startingLetterChanged: game.letters.top[0] !== "A", targetLetterUnchanged: game.letters.bottom[5] === "I", requiredStart: game.requiredStartIndex.bottom }), 20); })'
+if ($firstShot.side -ne "bottom" -or $firstShot.lane -ne 5 -or -not $firstShot.startingLetterChanged -or -not $firstShot.targetLetterUnchanged -or $firstShot.requiredStart -ne 5) { throw "First shot failed" }
 
-$secondWord = Invoke-CdpExpression '(() => { const game = window.keypongGame; game.typedWord = "LE"; game.updateWordState(false); return game.wordState; })()'
-if (-not $secondWord.valid -or $secondWord.targetLane -ne 1) { throw "LE validation failed" }
+$secondWord = Invoke-CdpExpression '(() => { const game = window.keypongGame; game.typedWord = "ILE"; game.updateWordState(false); return game.wordState; })()'
+if (-not $secondWord.valid -or $secondWord.startLetterIndex -ne 5 -or $secondWord.targetLetterIndex -ne 5) { throw "ILE validation failed" }
 
-$secondShot = Invoke-CdpExpression 'new Promise((resolve) => { const game = window.keypongGame; game.handleSpacePress(); game.finishCurrentShot(); setTimeout(() => resolve({ side: game.activeSide, lane: game.positions.top }), 20); })'
-if ($secondShot.side -ne "top" -or $secondShot.lane -ne 1) { throw "Second shot failed" }
+$secondShot = Invoke-CdpExpression 'new Promise((resolve) => { const game = window.keypongGame; game.handleSpacePress(); game.finishCurrentShot(); setTimeout(() => resolve({ side: game.activeSide, lane: game.positions.top, startingLetterChanged: game.letters.bottom[5] !== "I", targetLetterUnchanged: game.letters.top[5] === "L", requiredStart: game.requiredStartIndex.top }), 20); })'
+if ($secondShot.side -ne "top" -or $secondShot.lane -ne 5 -or -not $secondShot.startingLetterChanged -or -not $secondShot.targetLetterUnchanged -or $secondShot.requiredStart -ne 5) { throw "Second shot failed" }
 
 [void](Invoke-CdpExpression $setupExpression)
-$powerShot = Invoke-CdpExpression '(() => { const game = window.keypongGame; game.typedWord = "AILERONS"; game.updateWordState(false); const valid = game.wordState.valid; game.handleSpacePress(); const bodyAnimations = game.getPaddle("top").querySelector("[data-paddle-body]").getAnimations(); const duration = bodyAnimations[0]?.effect.getTiming().duration ?? 0; game.finishCurrentShot(); return { valid, animationCount: bodyAnimations.length, duration }; })()'
-if (-not $powerShot.valid -or $powerShot.animationCount -ne 1 -or $powerShot.duration -ne 560) { throw "Long-word paddle spin failed" }
+$dropShot = Invoke-CdpExpression '(() => { const game = window.keypongGame; game.typedWord = "AI"; game.updateWordState(false); const valid = game.wordState.valid; game.handleSpacePress(); const callout = game.elements.shotCallout; const result = { valid, text: callout.textContent, visible: callout.classList.contains("is-visible") }; game.finishCurrentShot(); return result; })()'
+if (-not $dropShot.valid -or $dropShot.text -ne "AMORTI !" -or -not $dropShot.visible) { throw "Two-letter drop-shot callout failed" }
+
+[void](Invoke-CdpExpression $setupExpression)
+$powerShot = Invoke-CdpExpression '(() => { const game = window.keypongGame; game.typedWord = "AILERONS"; game.updateWordState(false); const valid = game.wordState.valid; game.handleSpacePress(); const bodyAnimations = game.getPaddle("top").querySelector("[data-paddle-body]").getAnimations(); const duration = bodyAnimations[0]?.effect.getTiming().duration ?? 0; const callout = game.elements.shotCallout; const result = { valid, animationCount: bodyAnimations.length, duration, text: callout.textContent, visible: callout.classList.contains("is-visible") }; game.finishCurrentShot(); return result; })()'
+if (-not $powerShot.valid -or $powerShot.animationCount -ne 1 -or $powerShot.duration -ne 560 -or $powerShot.text -ne "SMASH !" -or -not $powerShot.visible) { throw "Long-word smash callout failed" }
 
 $socket.Dispose()
-Write-Output "Gameplay smoke test passed: AILE, LE, and 7+ letter paddle spin."
+Write-Output "Gameplay smoke test passed: cross-camp letters, delayed replacement, and 7+ letter paddle spin."

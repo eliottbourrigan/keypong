@@ -12,16 +12,11 @@
   </head>
   <body>
     <main class="game" aria-label="Table de ping-pong">
-      <section class="word-panel" data-word-panel aria-live="polite">
-        <div class="word-panel__player">
-          <span class="player-dot" data-player-dot></span>
-          <span data-player-label>Joueur bleu</span>
-        </div>
+      <section class="word-panel word-panel--top" data-word-panel="top" aria-live="polite">
         <div class="word-panel__entry">
-          <span class="typed-word" data-typed-word>Tape un mot</span>
-          <span class="word-valid" data-word-valid aria-label="Mot valide">✓</span>
+          <span class="typed-word" data-typed-word="top">-</span>
+          <span class="word-valid" data-word-valid="top" aria-label="Mot valide">✓</span>
         </div>
-        <p class="word-panel__instruction" data-word-instruction></p>
       </section>
 
       <div class="scene" data-game-scene>
@@ -31,6 +26,7 @@
         </div>
 
         <div class="ball" data-ball aria-label="Balle de ping-pong"></div>
+        <div class="shot-callout" data-shot-callout role="status" aria-live="polite"></div>
 
         <div class="paddle paddle--top" data-paddle="top" aria-label="Raquette bleue du haut">
           <div class="paddle__body" data-paddle-body>
@@ -46,6 +42,13 @@
           </div>
         </div>
       </div>
+
+      <section class="word-panel word-panel--bottom" data-word-panel="bottom" aria-live="polite">
+        <div class="word-panel__entry">
+          <span class="typed-word" data-typed-word="bottom">-</span>
+          <span class="word-valid" data-word-valid="bottom" aria-label="Mot valide">✓</span>
+        </div>
+      </section>
     </main>
 
     <script src="dictionary.js"></script>

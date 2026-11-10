@@ -39,7 +39,7 @@ body {
   min-height: 100vh;
   min-height: 100svh;
   align-content: center;
-  gap: 16px;
+  gap: 4px;
   place-items: center;
   padding: 24px;
 }
@@ -48,37 +48,21 @@ body {
   position: relative;
   z-index: 10;
   width: min(86vw, 430px);
-  min-height: 92px;
-  padding: 12px 18px 13px;
-  background: rgb(255 255 255 / 94%);
-  border: 3px solid var(--table-outline);
-  border-radius: 12px;
-  box-shadow: 4px 5px 0 rgb(37 35 35 / 10%);
+  min-height: 42px;
   text-align: center;
 }
 
-.word-panel__player {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  color: var(--ink);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.word-panel--top {
+  --player-color: var(--blue);
 }
 
-.player-dot {
-  width: 10px;
-  aspect-ratio: 1;
-  background: var(--player-color, var(--blue));
-  border-radius: 50%;
+.word-panel--bottom {
+  --player-color: var(--red);
 }
 
 .word-panel__entry {
   display: flex;
-  min-height: 35px;
+  min-height: 42px;
   align-items: center;
   justify-content: center;
   gap: 8px;
@@ -87,8 +71,8 @@ body {
 .typed-word {
   overflow: hidden;
   max-width: 90%;
-  color: #8d959a;
-  font-size: clamp(1.3rem, 4vw, 1.8rem);
+  color: var(--player-color);
+  font-size: clamp(1.7rem, 5.5vw, 2.35rem);
   font-weight: 900;
   letter-spacing: 0.08em;
   line-height: 1;
@@ -98,7 +82,7 @@ body {
 }
 
 .typed-word.is-valid {
-  color: var(--valid);
+  color: var(--player-color);
 }
 
 .word-valid {
@@ -113,13 +97,6 @@ body {
 .word-valid.is-visible {
   opacity: 1;
   transform: scale(1);
-}
-
-.word-panel__instruction {
-  margin: 1px 0 0;
-  color: #6d757a;
-  font-size: 0.72rem;
-  font-weight: 700;
 }
 
 .scene {
@@ -221,6 +198,31 @@ body {
   box-shadow: 2px 3px 0 rgb(21 21 21 / 12%);
 }
 
+.shot-callout {
+  position: absolute;
+  z-index: 7;
+  top: calc(48.2% + 4px);
+  left: 50%;
+  padding: 7px 11px 6px;
+  color: #fff;
+  background: var(--shot-color, var(--red));
+  box-shadow: 3px 4px 0 rgb(21 21 21 / 22%);
+  font-family: "Trebuchet MS", Arial, sans-serif;
+  font-size: clamp(1rem, 4vw, 1.45rem);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) rotate(-7deg) scale(0.7);
+  transition: opacity 120ms ease, transform 180ms cubic-bezier(0.2, 0.85, 0.3, 1);
+}
+
+.shot-callout.is-visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) rotate(-7deg) scale(1);
+}
+
 .bounce-ring {
   position: absolute;
   z-index: 4;
@@ -283,12 +285,12 @@ body {
 
 @media (max-height: 650px) {
   .game {
-    gap: 8px;
+    gap: 4px;
+    padding: 8px;
   }
 
   .word-panel {
-    min-height: 72px;
-    padding-block: 8px;
+    min-height: 38px;
   }
 
   .scene {

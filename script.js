@@ -8,6 +8,7 @@ class PingPongScene {
     this.currentBounce = null;
     this.travelDuration = 1300;
     this.typedWord = "";
+    this.typingPaddleAnimation = null;
     this.wordState = this.emptyWordState();
     this.audioContext = null;
     this.audioMaster = null;
@@ -17,41 +18,35 @@ class PingPongScene {
     this.dictionary = new Set(dictionaryWords);
     window.KEYPONG_WORDS = null;
 
-    this.receptionPool =
-      "AAAAAAAABBBBCCCCCDDDDDEEEEEEEEEEEEEFFFFGGGGHHHHIIIIIIIIJJLLLLLLMMMMMMNNNNNNNNOOOOOOOPPPPPRRRRRRRRSSSSSSSSTTTTTTTTUUUUUUVVV";
-    this.sendPool = `${this.receptionPool}KKQQWWYY`;
-    this.lanes = [
-      { ball: 18, topPaddle: 0, bottomPaddle: 14 },
-      { ball: 46, topPaddle: 28, bottomPaddle: 42 },
-      { ball: 74, topPaddle: 56, bottomPaddle: 70 },
-    ];
-    this.positions = { top: 0, bottom: 2 };
+    this.letterPool =
+      "AAAAAAAABBBBCCCCCDDDDDEEEEEEEEEEEEEFFFFGGGGHHHHIIIIIIIIJJLLLLLLMMMMMMNNNNNNNNOOOOOOOPPPPPRRRRRRRRSSSSSSSSTTTTTTTTUUUUUUVVVKKQQWWYY";
+    this.positions = { top: 0, bottom: 0 };
+    this.paddleOffsets = { top: null, bottom: null };
     this.letters = {
-      top: {
-        reception: this.generateRow("reception"),
-        send: this.generateRow("send"),
-      },
-      bottom: {
-        reception: this.generateRow("reception"),
-        send: this.generateRow("send"),
-      },
+      top: this.generateLetters(),
+      bottom: this.generateLetters(),
     };
-    this.letterCells = {
-      top: { reception: [], send: [] },
-      bottom: { reception: [], send: [] },
-    };
+    this.letterCells = { top: [], bottom: [] };
+    this.requiredStartIndex = { top: null, bottom: null };
     this.elements = {
       table: root.querySelector("[data-table]"),
       net: root.querySelector("[data-net]"),
       ball: root.querySelector("[data-ball]"),
+      shotCallout: root.querySelector("[data-shot-callout]"),
       paddles: [...root.querySelectorAll("[data-paddle]")],
       letterGrid: root.querySelector("[data-letter-grid]"),
-      wordPanel: document.querySelector("[data-word-panel]"),
-      playerDot: document.querySelector("[data-player-dot]"),
-      playerLabel: document.querySelector("[data-player-label]"),
-      typedWord: document.querySelector("[data-typed-word]"),
-      wordValid: document.querySelector("[data-word-valid]"),
-      wordInstruction: document.querySelector("[data-word-instruction]"),
+      wordPanels: {
+        top: document.querySelector('[data-word-panel="top"]'),
+        bottom: document.querySelector('[data-word-panel="bottom"]'),
+      },
+      typedWords: {
+        top: document.querySelector('[data-typed-word="top"]'),
+        bottom: document.querySelector('[data-typed-word="bottom"]'),
+      },
+      wordValids: {
+        top: document.querySelector('[data-word-valid="top"]'),
+        bottom: document.querySelector('[data-word-valid="bottom"]'),
+      },
     };
   }
 
@@ -72,46 +67,47 @@ class PingPongScene {
     return {
       normalized: "",
       startsCorrectly: false,
-      targetLane: -1,
+      startLetterIndex: -1,
+      targetLetterIndex: -1,
       exists: false,
       valid: false,
     };
   }
 
-  generateRow(role) {
-    const pool = role === "reception" ? this.receptionPool : this.sendPool;
-    const row = [];
+  generateLetters() {
+    const letters = [];
 
-    while (row.length < 3) {
-      const letter = pool[Math.floor(Math.random() * pool.length)];
-      if (!row.includes(letter)) row.push(letter);
+    while (letters.length < 6) {
+      const letter = this.letterPool[Math.floor(Math.random() * this.letterPool.length)];
+      if (!letters.includes(letter)) letters.push(letter);
     }
 
-    return row;
+    return letters;
   }
 
   createLetterGrid() {
     const physicalRows = [
-      { owner: "top", role: "reception" },
-      { owner: "bottom", role: "send" },
-      { owner: "top", role: "send" },
-      { owner: "bottom", role: "reception" },
+      { owner: "top", startIndex: 0 },
+      { owner: "top", startIndex: 3 },
+      { owner: "bottom", startIndex: 3 },
+      { owner: "bottom", startIndex: 0 },
     ];
     const fragment = document.createDocumentFragment();
 
-    physicalRows.forEach(({ owner, role }) => {
-      this.letters[owner][role].forEach((letter, lane) => {
+    physicalRows.forEach(({ owner, startIndex }) => {
+      this.letters[owner].slice(startIndex, startIndex + 3).forEach((letter, lane) => {
+        const letterIndex = startIndex + lane;
         const cell = document.createElement("div");
         const value = document.createElement("span");
         cell.className = "letter-cell";
         cell.dataset.owner = owner;
-        cell.dataset.role = role;
+        cell.dataset.letterIndex = letterIndex;
         cell.dataset.lane = lane;
         value.className = "letter-cell__value";
         value.textContent = letter;
         cell.append(value);
         fragment.append(cell);
-        this.letterCells[owner][role][lane] = cell;
+        this.letterCells[owner][letterIndex] = cell;
       });
     });
 
@@ -136,7 +132,7 @@ class PingPongScene {
       if (this.typedWord.length === 0) return;
       event.preventDefault();
       this.ensureAudio();
-      this.typedWord = this.typedWord.slice(0, -1);
+      this.typedWord = event.ctrlKey || event.metaKey ? "" : this.typedWord.slice(0, -1);
       this.playTypingSound(this.typedWord.length);
       this.updateWordState();
       return;
@@ -152,6 +148,7 @@ class PingPongScene {
     this.typedWord += letters;
     this.playTypingSound(this.typedWord.length);
     this.updateWordState();
+    this.popTypedWord(this.activeSide);
   }
 
   normalizeWord(word) {
@@ -167,15 +164,18 @@ class PingPongScene {
 
   updateWordState() {
     const normalized = this.normalizeWord(this.typedWord);
-    const receptionLane = this.positions[this.activeSide];
-    const receptionLetter = this.letters[this.activeSide].reception[receptionLane];
-    const sendLetters = this.letters[this.activeSide].send;
-    const startsCorrectly = normalized.length > 0 && normalized[0] === receptionLetter;
-    let targetLane = -1;
+    const ownLetters = this.letters[this.activeSide];
+    const opponent = this.activeSide === "top" ? "bottom" : "top";
+    const requiredStartIndex = this.requiredStartIndex[this.activeSide];
+    const startLetterIndex = ownLetters.indexOf(normalized[0]);
+    const startsCorrectly =
+      startLetterIndex !== -1 &&
+      (requiredStartIndex === null || startLetterIndex === requiredStartIndex);
+    let targetLetterIndex = -1;
 
     if (startsCorrectly) {
-      for (let index = 1; index < normalized.length && targetLane === -1; index += 1) {
-        targetLane = sendLetters.indexOf(normalized[index]);
+      for (let index = 1; index < normalized.length && targetLetterIndex === -1; index += 1) {
+        targetLetterIndex = this.letters[opponent].indexOf(normalized[index]);
       }
     }
 
@@ -183,9 +183,10 @@ class PingPongScene {
     this.wordState = {
       normalized,
       startsCorrectly,
-      targetLane,
+      startLetterIndex,
+      targetLetterIndex,
       exists,
-      valid: exists && startsCorrectly && targetLane !== -1,
+      valid: exists && startsCorrectly && targetLetterIndex !== -1,
     };
 
     this.renderWordState();
@@ -193,34 +194,40 @@ class PingPongScene {
 
   renderWordState() {
     const side = this.activeSide;
-    const playerName = side === "top" ? "Joueur bleu" : "Joueur rouge";
-    const playerColor = side === "top" ? "var(--blue)" : "var(--red)";
-    const receptionLane = this.positions[side];
+    const requiredStartIndex = this.requiredStartIndex[side];
+    const opponent = side === "top" ? "bottom" : "top";
 
-    Object.values(this.letterCells).forEach((roles) => {
-      Object.values(roles).flat().forEach((cell) => {
+    Object.values(this.letterCells).forEach((cells) => {
+      cells.forEach((cell) => {
         cell.classList.remove("is-current", "is-included");
       });
     });
 
-    const receptionCell = this.letterCells[side].reception[receptionLane];
-    receptionCell.classList.add("is-current");
-    if (this.wordState.startsCorrectly) receptionCell.classList.add("is-included");
-    if (this.wordState.targetLane !== -1) {
-      this.letterCells[side].send[this.wordState.targetLane].classList.add("is-included");
+    const availableStartIndexes =
+      requiredStartIndex === null ? this.letters[side].map((_, index) => index) : [requiredStartIndex];
+    availableStartIndexes.forEach((index) => this.letterCells[side][index].classList.add("is-current"));
+    if (this.wordState.startsCorrectly) {
+      this.letterCells[side][this.wordState.startLetterIndex].classList.add("is-included");
+    }
+    if (this.wordState.targetLetterIndex !== -1) {
+      this.letterCells[opponent][this.wordState.targetLetterIndex].classList.add("is-included");
+    }
+    if (this.wordState.startsCorrectly && !this.isInFlight) {
+      const target = this.getLetterTarget(side, this.wordState.startLetterIndex);
+      const position = this.getPaddlePosition(side, target);
+      const paddle = this.getPaddle(side);
+      paddle.style.left = `${position.left}%`;
+      paddle.style.top = `${position.top}%`;
+      this.elements.ball.style.left = `${target.left}%`;
+      this.elements.ball.style.top = `${target.top}%`;
     }
 
-    this.elements.wordPanel.style.setProperty("--player-color", playerColor);
-    this.elements.playerLabel.textContent = playerName;
-    this.elements.typedWord.textContent = this.typedWord || "Tape un mot";
-    this.elements.typedWord.classList.toggle("is-valid", this.wordState.valid);
-    this.elements.wordValid.classList.toggle("is-visible", this.wordState.valid);
-
-    if (this.dictionary.size === 0) {
-      this.elements.wordInstruction.textContent = "Dictionnaire indisponible";
-    } else {
-      this.elements.wordInstruction.textContent = "";
-    }
+    this.elements.typedWords[side].textContent = this.typedWord || "-";
+    this.elements.typedWords[side].classList.toggle("is-valid", this.wordState.valid);
+    Object.entries(this.elements.wordValids).forEach(([player, wordValid]) => {
+      wordValid.classList.toggle("is-visible", player === side && this.wordState.valid);
+    });
+    this.updatePaddleTremble();
   }
 
   handleSpacePress() {
@@ -230,7 +237,7 @@ class PingPongScene {
     }
 
     if (!this.wordState.valid) {
-      this.elements.wordPanel.animate(
+      this.elements.wordPanels[this.activeSide].animate(
         [
           { transform: "translateX(0)" },
           { transform: "translateX(-7px)" },
@@ -265,48 +272,57 @@ class PingPongScene {
     if (this.isInFlight || !this.wordState.valid) return;
 
     this.isInFlight = true;
+    this.stopPaddleTremble();
     this.root.dataset.state = "striking";
 
     const fromSide = this.activeSide;
     const targetSide = fromSide === "top" ? "bottom" : "top";
-    const fromLaneIndex = this.positions[fromSide];
-    const fromLane = this.lanes[fromLaneIndex];
-    const targetLaneIndex = this.wordState.targetLane;
-    const targetLane = this.lanes[targetLaneIndex];
+    const fromTarget = this.getLetterTarget(fromSide, this.wordState.startLetterIndex);
+    const targetLetterIndex = this.wordState.targetLetterIndex;
+    const targetTarget = this.getLetterTarget(targetSide, targetLetterIndex);
     const receiver = this.getPaddle(targetSide);
-    const receiverStart = this.lanes[this.positions[targetSide]];
-    const receiverStartPosition = this.getPaddlePosition(targetSide, receiverStart);
-    const receiverTargetPosition = this.getPaddlePosition(targetSide, targetLane);
+    const receiverStyle = getComputedStyle(receiver);
+    const receiverStartPosition = { left: receiverStyle.left, top: receiverStyle.top };
+    const receiverTargetPosition = this.getPaddlePosition(targetSide, targetTarget);
     const receiverTransforms = this.getPaddleTransforms(targetSide);
-    const isPowerShot = this.wordState.normalized.length > 6;
+    const wordLength = this.wordState.normalized.length;
+    const isPowerShot = wordLength > 6;
 
     this.playPaddleSound();
-    receiver.style.left = `${receiverTargetPosition}%`;
+    receiver.style.left = `${receiverTargetPosition.left}%`;
+    receiver.style.top = `${receiverTargetPosition.top}%`;
     receiver.style.transform = receiverTransforms.recoil;
     const receiverAnimation = receiver.animate(
       [
-        { left: `${receiverStartPosition}%`, transform: receiverTransforms.neutral },
-        { left: `${receiverTargetPosition}%`, transform: receiverTransforms.recoil },
+        {
+          left: receiverStartPosition.left,
+          top: receiverStartPosition.top,
+          transform: receiverTransforms.neutral,
+        },
+        {
+          left: `${receiverTargetPosition.left}%`,
+          top: `${receiverTargetPosition.top}%`,
+          transform: receiverTransforms.recoil,
+        },
       ],
       { duration: 1050, easing: "cubic-bezier(0.2, 0.7, 0.3, 1)" },
     );
 
     const strikeAnimation = this.animateStrike(fromSide);
+    strikeAnimation.finished.then(() => this.movePaddleOutside(fromSide));
     const spinAnimation = isPowerShot ? this.animatePaddleSpin(fromSide) : null;
-    this.consumeLetters(fromSide, fromLaneIndex, targetLaneIndex);
+    this.showShotCallout(wordLength, fromSide);
+    this.replaceLetter(fromSide, this.wordState.startLetterIndex);
     this.clearGridHighlights();
     this.root.dataset.state = "in-flight";
 
-    const targetTop = targetSide === "top" ? "12%" : "82%";
-    const fromTop = fromSide === "top" ? 12 : 82;
-    const targetTopValue = targetSide === "top" ? 12 : 82;
-    const bounceTop = targetSide === "top" ? 35 : 65;
-    const bounceProgress = (bounceTop - fromTop) / (targetTopValue - fromTop);
-    const bounceLeft = fromLane.ball + (targetLane.ball - fromLane.ball) * bounceProgress;
+    const bounceProgress = 0.5;
+    const bounceLeft = fromTarget.left + (targetTarget.left - fromTarget.left) * bounceProgress;
+    const bounceTop = fromTarget.top + (targetTarget.top - fromTarget.top) * bounceProgress;
     const ballAnimation = this.elements.ball.animate(
       [
-        { top: `${fromTop}%`, left: `${fromLane.ball}%` },
-        { top: targetTop, left: `${targetLane.ball}%` },
+        { top: `${fromTarget.top}%`, left: `${fromTarget.left}%` },
+        { top: `${targetTarget.top}%`, left: `${targetTarget.left}%` },
       ],
       {
         duration: this.travelDuration,
@@ -314,8 +330,8 @@ class PingPongScene {
       },
     );
 
-    this.elements.ball.style.top = targetTop;
-    this.elements.ball.style.left = `${targetLane.ball}%`;
+    this.elements.ball.style.top = `${targetTarget.top}%`;
+    this.elements.ball.style.left = `${targetTarget.left}%`;
     this.currentBounce = { x: bounceLeft, y: bounceTop, shown: false };
     this.bounceTimer = window.setTimeout(() => {
       this.showBounce(bounceLeft, bounceTop);
@@ -331,13 +347,15 @@ class PingPongScene {
       // The final inline position is already set, so a cancelled animation still resolves the turn.
     }
 
-    this.positions[targetSide] = targetLaneIndex;
+    this.positions[targetSide] = targetLetterIndex;
+    this.requiredStartIndex[targetSide] = targetLetterIndex;
     this.activeSide = targetSide;
     this.isInFlight = false;
     this.currentAnimations = [];
     if (this.bounceTimer) window.clearTimeout(this.bounceTimer);
     this.bounceTimer = null;
     this.currentBounce = null;
+    this.hideShotCallout();
     this.typedWord = "";
     this.wordState = this.emptyWordState();
     this.root.dataset.state = "waiting";
@@ -345,22 +363,16 @@ class PingPongScene {
     this.updateWordState();
   }
 
-  consumeLetters(side, receptionLane, sendLane) {
-    this.replaceLetter(side, "reception", receptionLane);
-    this.replaceLetter(side, "send", sendLane);
-  }
+  replaceLetter(side, letterIndex) {
+    const letters = this.letters[side];
+    let nextLetter = letters[letterIndex];
 
-  replaceLetter(side, role, lane) {
-    const row = this.letters[side][role];
-    const pool = role === "reception" ? this.receptionPool : this.sendPool;
-    let nextLetter = row[lane];
-
-    while (row.includes(nextLetter)) {
-      nextLetter = pool[Math.floor(Math.random() * pool.length)];
+    while (letters.includes(nextLetter)) {
+      nextLetter = this.letterPool[Math.floor(Math.random() * this.letterPool.length)];
     }
 
-    row[lane] = nextLetter;
-    const value = this.letterCells[side][role][lane].querySelector(".letter-cell__value");
+    letters[letterIndex] = nextLetter;
+    const value = this.letterCells[side][letterIndex].querySelector(".letter-cell__value");
     value.textContent = nextLetter;
     this.popLetter(value);
   }
@@ -377,31 +389,34 @@ class PingPongScene {
   }
 
   clearGridHighlights() {
-    Object.values(this.letterCells).forEach((roles) => {
-      Object.values(roles).flat().forEach((cell) => {
+    Object.values(this.letterCells).forEach((cells) => {
+      cells.forEach((cell) => {
         cell.classList.remove("is-current", "is-included");
       });
     });
   }
 
   placeElements() {
-    const topLane = this.lanes[this.positions.top];
-    const bottomLane = this.lanes[this.positions.bottom];
-    this.elements.ball.style.top = "12%";
-    this.elements.ball.style.left = `${topLane.ball}%`;
+    const topTarget = this.getLetterTarget("top", this.positions.top);
+    const bottomTarget = this.getLetterTarget("bottom", this.positions.bottom);
+    const topPosition = this.getPaddlePosition("top", topTarget);
+    const bottomPosition = this.getPaddlePosition("bottom", bottomTarget);
+
+    this.elements.ball.style.top = `${topTarget.top}%`;
+    this.elements.ball.style.left = `${topTarget.left}%`;
 
     const topPaddle = this.getPaddle("top");
-    topPaddle.style.left = `${topLane.topPaddle}%`;
+    topPaddle.style.left = `${topPosition.left}%`;
+    topPaddle.style.top = `${topPosition.top}%`;
     topPaddle.style.transform = this.getPaddleTransforms("top").recoil;
     const bottomPaddle = this.getPaddle("bottom");
-    bottomPaddle.style.left = `${bottomLane.bottomPaddle}%`;
+    bottomPaddle.style.left = `${bottomPosition.left}%`;
+    bottomPaddle.style.top = "85%";
     bottomPaddle.style.transform = this.getPaddleTransforms("bottom").neutral;
   }
 
   calibratePaddles() {
     const sceneRect = this.root.getBoundingClientRect();
-    const ballSize = this.elements.ball.getBoundingClientRect().width;
-
     ["top", "bottom"].forEach((side) => {
       const paddle = this.getPaddle(side);
       const sweetSpot = paddle.querySelector("[data-sweet-spot]");
@@ -412,17 +427,10 @@ class PingPongScene {
       paddle.style.transform = transforms.recoil;
 
       const spotRect = sweetSpot.getBoundingClientRect();
-      const ballTop = side === "top" ? 0.12 : 0.82;
-      const targetCenterY = sceneRect.top + sceneRect.height * ballTop + ballSize / 2;
-      const alignedTop = ((targetCenterY - spotRect.top) / sceneRect.height) * 100;
-      const paddleProperty = side === "top" ? "topPaddle" : "bottomPaddle";
-      paddle.style.top = `${alignedTop}%`;
-
-      this.lanes.forEach((lane) => {
-        const targetCenterX =
-          sceneRect.left + sceneRect.width * (lane.ball / 100) + ballSize / 2;
-        lane[paddleProperty] = ((targetCenterX - spotRect.left) / sceneRect.width) * 100;
-      });
+      this.paddleOffsets[side] = {
+        left: spotRect.left - sceneRect.left,
+        top: spotRect.top - sceneRect.top,
+      };
     });
   }
 
@@ -430,8 +438,29 @@ class PingPongScene {
     return this.elements.paddles.find((paddle) => paddle.dataset.paddle === side);
   }
 
-  getPaddlePosition(side, lane) {
-    return side === "top" ? lane.topPaddle : lane.bottomPaddle;
+  getLetterTarget(side, letterIndex) {
+    const sceneRect = this.root.getBoundingClientRect();
+    const letterRect = this.letterCells[side][letterIndex].getBoundingClientRect();
+    const ballSize = this.elements.ball.getBoundingClientRect().width;
+    const gap = 5;
+    const centerX = letterRect.left + letterRect.width / 2;
+    const centerY = side === "top" ? letterRect.top - gap : letterRect.bottom + gap;
+
+    return {
+      left: ((centerX - ballSize / 2 - sceneRect.left) / sceneRect.width) * 100,
+      top: ((centerY - ballSize / 2 - sceneRect.top) / sceneRect.height) * 100,
+      centerX,
+      centerY,
+    };
+  }
+
+  getPaddlePosition(side, target) {
+    const sceneRect = this.root.getBoundingClientRect();
+    const offset = this.paddleOffsets[side];
+    return {
+      left: ((target.centerX - sceneRect.left - offset.left) / sceneRect.width) * 100,
+      top: ((target.centerY - sceneRect.top - offset.top) / sceneRect.height) * 100,
+    };
   }
 
   animateStrike(side) {
@@ -450,6 +479,93 @@ class PingPongScene {
       paddle.style.transform = neutral;
     });
     return animation;
+  }
+
+  movePaddleOutside(side) {
+    const paddle = this.getPaddle(side);
+    const transforms = this.getPaddleTransforms(side);
+    const startTop = getComputedStyle(paddle).top;
+    const outsideTop = side === "top" ? "0%" : "85%";
+
+    const animation = paddle.animate(
+      [
+        { top: startTop, transform: transforms.neutral },
+        { top: outsideTop, transform: transforms.neutral },
+      ],
+      { duration: 540, easing: "cubic-bezier(0.2, 0.7, 0.3, 1)", fill: "forwards" },
+    );
+    animation.finished.then(() => {
+      paddle.style.top = outsideTop;
+      paddle.style.transform = transforms.neutral;
+      animation.cancel();
+    });
+  }
+
+  showShotCallout(wordLength, side) {
+    const label = wordLength === 2 ? "AMORTI !" : wordLength > 6 ? "SMASH !" : "";
+    if (!label) return;
+
+    this.elements.shotCallout.textContent = label;
+    this.elements.shotCallout.style.setProperty(
+      "--shot-color",
+      side === "top" ? "var(--blue)" : "var(--red)",
+    );
+    this.elements.shotCallout.classList.add("is-visible");
+  }
+
+  hideShotCallout() {
+    this.elements.shotCallout.classList.remove("is-visible");
+  }
+
+  popTypedWord(side) {
+    this.elements.typedWords[side].animate(
+      [
+        { transform: "scale(0.92)" },
+        { transform: "scale(1.05)", offset: 0.55 },
+        { transform: "scale(1)" },
+      ],
+      { duration: 130, easing: "cubic-bezier(0.2, 0.85, 0.3, 1)" },
+    );
+  }
+
+  updatePaddleTremble() {
+    this.stopPaddleTremble();
+    if (!this.typedWord || this.isInFlight) return;
+
+    const side = this.activeSide;
+    const paddle = this.getPaddle(side);
+    const transforms = this.getPaddleTransforms(side);
+    const length = this.typedWord.length;
+    const distance = Math.min(7, 0.1 + length * 0.45);
+    const rotation = Math.min(4, 0.1 + length * 0.26);
+    const duration = Math.max(80, 225 - length * 13);
+    const positions = [
+      [-1, -0.45, -1],
+      [0.75, -1, 0.55],
+      [-0.5, 1, 1],
+      [1, 0.3, -0.65],
+    ];
+    if (length >= 7) {
+      positions.push(
+        [-0.9, 0.7, 0.3],
+        [0.25, -0.8, -1],
+        [0.95, 0.85, 0.8],
+        [-0.7, -0.15, -0.4],
+      );
+    }
+
+    this.typingPaddleAnimation = paddle.animate(
+      positions.map(([x, y, angle]) => ({
+        transform: `translate(${x * distance}px, ${y * distance}px) rotate(${angle * rotation}deg) ${transforms.recoil}`,
+      })),
+      { duration, easing: "steps(2, end)", iterations: Infinity },
+    );
+  }
+
+  stopPaddleTremble() {
+    if (!this.typingPaddleAnimation) return;
+    this.typingPaddleAnimation.cancel();
+    this.typingPaddleAnimation = null;
   }
 
   animatePaddleSpin(side) {
