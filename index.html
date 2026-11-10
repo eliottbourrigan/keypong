@@ -12,26 +12,51 @@
   </head>
   <body>
     <main class="game" aria-label="Table de ping-pong">
+      <section class="word-panel" data-word-panel aria-live="polite">
+        <div class="word-panel__player">
+          <span class="player-dot" data-player-dot></span>
+          <span data-player-label>Joueur bleu</span>
+        </div>
+        <div class="word-panel__entry">
+          <span class="typed-word" data-typed-word>Tape un mot</span>
+          <span class="word-valid" data-word-valid aria-label="Mot valide">✓</span>
+        </div>
+        <p class="word-panel__instruction" data-word-instruction></p>
+      </section>
+
       <div class="scene" data-game-scene>
         <div class="table" data-table>
-          <div class="table__center-line" aria-hidden="true"></div>
+          <div class="letter-grid" data-letter-grid aria-label="Grille de lettres"></div>
           <div class="net" data-net aria-hidden="true"></div>
         </div>
 
         <div class="ball" data-ball aria-label="Balle de ping-pong"></div>
 
-        <div class="paddle paddle--top" data-paddle="top" aria-label="Raquette rouge du haut">
-          <img class="paddle__icon" src="raquette.svg" alt="" />
-          <span class="paddle__sweet-spot" data-sweet-spot aria-hidden="true"></span>
+        <div class="paddle paddle--top" data-paddle="top" aria-label="Raquette bleue du haut">
+          <div class="paddle__body" data-paddle-body>
+            <span class="paddle__edge paddle__edge--4" aria-hidden="true"></span>
+            <span class="paddle__edge paddle__edge--3" aria-hidden="true"></span>
+            <span class="paddle__edge paddle__edge--2" aria-hidden="true"></span>
+            <span class="paddle__edge paddle__edge--1" aria-hidden="true"></span>
+            <img class="paddle__icon" src="raquette-bleue.svg" alt="" />
+            <span class="paddle__sweet-spot" data-sweet-spot aria-hidden="true"></span>
+          </div>
         </div>
 
         <div class="paddle paddle--bottom" data-paddle="bottom" aria-label="Raquette rouge du bas">
-          <img class="paddle__icon" src="raquette.svg" alt="" />
-          <span class="paddle__sweet-spot" data-sweet-spot aria-hidden="true"></span>
+          <div class="paddle__body" data-paddle-body>
+            <span class="paddle__edge paddle__edge--4" aria-hidden="true"></span>
+            <span class="paddle__edge paddle__edge--3" aria-hidden="true"></span>
+            <span class="paddle__edge paddle__edge--2" aria-hidden="true"></span>
+            <span class="paddle__edge paddle__edge--1" aria-hidden="true"></span>
+            <img class="paddle__icon" src="raquette.svg" alt="" />
+            <span class="paddle__sweet-spot" data-sweet-spot aria-hidden="true"></span>
+          </div>
         </div>
       </div>
     </main>
 
+    <script src="dictionary.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

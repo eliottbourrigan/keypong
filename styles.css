@@ -2,11 +2,16 @@
   --background: #fff;
   --grid: #edf0f2;
   --table: #5f8f78;
+  --table-checker: #58866f;
   --table-highlight: #78a58d;
   --table-outline: #252323;
   --ink: #151515;
   --net: #fffaf0;
   --ball: #fffdf3;
+  --blue: #347fc4;
+  --red: #e65353;
+  --valid: #31905e;
+  --letter-depth: #28473d;
 }
 
 * {
@@ -33,8 +38,88 @@ body {
   display: grid;
   min-height: 100vh;
   min-height: 100svh;
+  align-content: center;
+  gap: 16px;
   place-items: center;
   padding: 24px;
+}
+
+.word-panel {
+  position: relative;
+  z-index: 10;
+  width: min(86vw, 430px);
+  min-height: 92px;
+  padding: 12px 18px 13px;
+  background: rgb(255 255 255 / 94%);
+  border: 3px solid var(--table-outline);
+  border-radius: 12px;
+  box-shadow: 4px 5px 0 rgb(37 35 35 / 10%);
+  text-align: center;
+}
+
+.word-panel__player {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: var(--ink);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.player-dot {
+  width: 10px;
+  aspect-ratio: 1;
+  background: var(--player-color, var(--blue));
+  border-radius: 50%;
+}
+
+.word-panel__entry {
+  display: flex;
+  min-height: 35px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.typed-word {
+  overflow: hidden;
+  max-width: 90%;
+  color: #8d959a;
+  font-size: clamp(1.3rem, 4vw, 1.8rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.typed-word.is-valid {
+  color: var(--valid);
+}
+
+.word-valid {
+  color: var(--valid);
+  font-size: 1.4rem;
+  font-weight: 900;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.word-valid.is-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.word-panel__instruction {
+  margin: 1px 0 0;
+  color: #6d757a;
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 .scene {
@@ -52,16 +137,69 @@ body {
   box-shadow: 7px 8px 0 rgb(184 116 30 / 12%);
 }
 
-.table__center-line {
+.letter-grid {
   position: absolute;
-  inset: 0 auto 0 48%;
-  width: 5.5%;
-  background: var(--table-highlight);
+  z-index: 1;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+}
+
+.letter-cell {
+  display: grid;
+  place-items: center;
+  color: var(--player-color);
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+
+.letter-cell[data-owner="top"] {
+  --player-color: var(--blue);
+  --player-tint: rgb(52 127 196 / 78%);
+}
+
+.letter-cell[data-owner="bottom"] {
+  --player-color: var(--red);
+  --player-tint: rgb(230 83 83 / 78%);
+}
+
+.letter-cell:nth-child(odd) {
+  background: var(--table-checker);
+}
+
+.letter-cell__value {
+  display: grid;
+  width: clamp(29px, 8vw, 42px);
+  aspect-ratio: 1;
+  place-items: center;
+  color: var(--player-color);
+  background: transparent;
+  font-family: "Trebuchet MS", Arial, sans-serif;
+  font-size: clamp(1.25rem, 5vw, 1.8rem);
+  font-weight: 900;
+  filter: drop-shadow(3px 3px 0 var(--letter-depth));
+  paint-order: stroke fill;
+  -webkit-text-stroke: 4px var(--letter-depth);
+  transition: color 120ms ease, background-color 120ms ease, transform 120ms ease;
+}
+
+.letter-cell.is-current {
+  box-shadow: inset 0 0 0 3px rgb(255 255 255 / 42%);
+}
+
+.letter-cell.is-included {
+  background: var(--player-tint);
+}
+
+.letter-cell.is-included .letter-cell__value {
+  color: #fff;
+  background: transparent;
+  transform: scale(1.13) rotate(-3deg);
 }
 
 .net {
   position: absolute;
-  z-index: 2;
+  z-index: 3;
   top: 48.2%;
   left: -1%;
   width: 102%;
@@ -98,14 +236,50 @@ body {
   z-index: 6;
   width: 29%;
   aspect-ratio: 925 / 915;
+  perspective: 420px;
+  transform-style: preserve-3d;
+}
+
+.paddle__body {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 60%;
+  transform-style: preserve-3d;
 }
 
 .paddle__icon {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
-  transform: scaleX(-1);
+  transform: translateZ(6px) scaleX(-1);
+}
+
+.paddle__edge {
+  position: absolute;
+  inset: 0;
+  background: var(--table-outline);
+  mask: url("raquette.svg") center / contain no-repeat;
+  pointer-events: none;
+  -webkit-mask: url("raquette.svg") center / contain no-repeat;
+}
+
+.paddle__edge--1 {
+  transform: translate3d(2px, 2px, 2px) scaleX(-1);
+}
+
+.paddle__edge--2 {
+  transform: translate3d(4px, 4px, -2px) scaleX(-1);
+}
+
+.paddle__edge--3 {
+  transform: translate3d(6px, 6px, -6px) scaleX(-1);
+}
+
+.paddle__edge--4 {
+  transform: translate3d(8px, 8px, -10px) scaleX(-1);
 }
 
 .paddle__sweet-spot {
@@ -136,8 +310,17 @@ body {
 }
 
 @media (max-height: 650px) {
+  .game {
+    gap: 8px;
+  }
+
+  .word-panel {
+    min-height: 72px;
+    padding-block: 8px;
+  }
+
   .scene {
-    width: min(48vh, 310px);
+    width: min(42vh, 280px);
   }
 }
 
