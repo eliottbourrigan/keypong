@@ -59,6 +59,12 @@ class PingPongScene {
 
     window.addEventListener("keydown", (event) => this.handleKeyDown(event));
     this.setupMobileInput();
+    // Le navigateur suspend l'audio quand l'onglet est caché : on le relance au retour.
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) this.ensureAudio();
+    });
+    window.addEventListener("focus", () => this.ensureAudio());
+    window.addEventListener("pointerdown", () => this.ensureAudio());
     this.root.dataset.state = "waiting";
     this.root.dataset.turn = this.activeSide;
     this.root.dataset.ready = "true";
@@ -707,8 +713,14 @@ class PingPongScene {
   ensureAudio() {
     this.prepareAudio();
     if (!this.audioContext) return;
-    if (this.audioContext.state === "suspended") {
-      this.audioContext.resume().then(() => {
+    // "interrupted" = iOS après mise en arrière-plan ; "closed" = à recréer.
+    if (this.audioContext.state === "closed") {
+      this.audioContext = null;
+      this.prepareAudio();
+      return;
+    }
+    if (this.audioContext.state !== "running") {
+      this.audioContext.resume().catch(() => {}).then(() => {
         console.info("[Keypong audio] context resumed", {
           state: this.audioContext.state,
           baseLatency: this.audioContext.baseLatency,
