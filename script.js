@@ -58,9 +58,49 @@ class PingPongScene {
     this.updateWordState();
 
     window.addEventListener("keydown", (event) => this.handleKeyDown(event));
+    this.setupMobileInput();
     this.root.dataset.state = "waiting";
     this.root.dataset.turn = this.activeSide;
     this.root.dataset.ready = "true";
+  }
+
+  // Champ caché pour faire apparaître le clavier sur mobile.
+  // Sentinelle "#" toujours présente : si elle disparaît, c'est un Backspace.
+  setupMobileInput() {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "mobile-input";
+    input.autocomplete = "off";
+    input.autocapitalize = "off";
+    input.spellcheck = false;
+    input.autofocus = true;
+    input.setAttribute("aria-label", "Saisie");
+    input.value = "#";
+    document.body.appendChild(input);
+    this.mobileInput = input;
+
+    const reset = () => {
+      input.value = "#";
+      input.setSelectionRange(1, 1);
+    };
+    input.addEventListener("input", () => {
+      const value = input.value;
+      reset();
+      if (!value.includes("#")) {
+        this.handleKeyDown({ key: "Backspace", code: "Backspace", preventDefault() {} });
+        return;
+      }
+      for (const char of value.replace("#", "")) {
+        this.handleKeyDown(
+          char === " "
+            ? { key: " ", code: "Space", preventDefault() {} }
+            : { key: char, code: "", preventDefault() {} },
+        );
+      }
+    });
+    // Un tap n'importe où redonne le focus (le focus auto est souvent bloqué sans geste).
+    window.addEventListener("pointerdown", () => input.focus({ preventScroll: true }));
+    input.focus({ preventScroll: true });
   }
 
   emptyWordState() {
