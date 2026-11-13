@@ -59,6 +59,7 @@ class PingPongScene {
 
     window.addEventListener("keydown", (event) => this.handleKeyDown(event));
     this.setupMobileInput();
+    this.trackViewport();
     // Le navigateur suspend l'audio quand l'onglet est caché : on le relance au retour.
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) this.ensureAudio();
@@ -68,6 +69,20 @@ class PingPongScene {
     this.root.dataset.state = "waiting";
     this.root.dataset.turn = this.activeSide;
     this.root.dataset.ready = "true";
+  }
+
+  // Suit la zone réellement visible (clavier mobile ouvert) pour dimensionner le jeu.
+  trackViewport() {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const update = () => {
+      const style = document.documentElement.style;
+      style.setProperty("--app-height", `${viewport.height}px`);
+      style.setProperty("--app-top", `${viewport.offsetTop}px`);
+    };
+    viewport.addEventListener("resize", update);
+    viewport.addEventListener("scroll", update);
+    update();
   }
 
   // Champ caché pour faire apparaître le clavier sur mobile.
@@ -461,6 +476,7 @@ class PingPongScene {
   }
 
   calibratePaddles() {
+    // Mesuré une seule fois, puis stocké en % de la scène : valable à toute taille.
     const sceneRect = this.root.getBoundingClientRect();
     ["top", "bottom"].forEach((side) => {
       const paddle = this.getPaddle(side);
@@ -473,8 +489,8 @@ class PingPongScene {
 
       const spotRect = sweetSpot.getBoundingClientRect();
       this.paddleOffsets[side] = {
-        left: spotRect.left - sceneRect.left,
-        top: spotRect.top - sceneRect.top,
+        left: ((spotRect.left - sceneRect.left) / sceneRect.width) * 100,
+        top: ((spotRect.top - sceneRect.top) / sceneRect.height) * 100,
       };
     });
   }
@@ -483,28 +499,53 @@ class PingPongScene {
     return this.elements.paddles.find((paddle) => paddle.dataset.paddle === side);
   }
 
+  // Géométrie de la scène, en % de sa largeur (x) ou de sa hauteur (y).
+  // Doit rester cohérente avec styles.css (.scene, .table, .ball, borders en cqw).
+  static GEOMETRY = {
+    aspect: 0.53, // largeur / hauteur de .scene
+    tableX: 14, // .table { inset: 17% 14% }
+    tableY: 17,
+    border: 1.5, // bordure de la table, en % de la largeur
+    ballSize: 8.5, // largeur de la balle, en % de la largeur
+    gap: 1.3, // écart balle/case, en % de la largeur
+  };
+
+  // Rangée physique de la grille (0 = tout en haut) pour une lettre d'un camp.
+  getPhysicalRow(side, letterIndex) {
+    const second = letterIndex >= 3;
+    if (side === "top") return second ? 1 : 0;
+    return second ? 2 : 3;
+  }
+
+  // Position de la balle et point de contact de la raquette devant une case.
+  // Tout est calculé en pourcentages : rien à mesurer, rien à recalculer au redimensionnement.
   getLetterTarget(side, letterIndex) {
-    const sceneRect = this.root.getBoundingClientRect();
-    const letterRect = this.letterCells[side][letterIndex].getBoundingClientRect();
-    const ballSize = this.elements.ball.getBoundingClientRect().width;
-    const gap = 5;
-    const centerX = letterRect.left + letterRect.width / 2;
-    const centerY = side === "top" ? letterRect.top - gap : letterRect.bottom + gap;
+    const g = PingPongScene.GEOMETRY;
+    const borderY = g.border * g.aspect;
+    const innerWidth = 100 - 2 * g.tableX - 2 * g.border;
+    const innerHeight = 100 - 2 * g.tableY - 2 * borderY;
+    const column = letterIndex % 3;
+    const row = this.getPhysicalRow(side, letterIndex);
+    const cellWidth = innerWidth / 3;
+    const cellHeight = innerHeight / 4;
+
+    const centerX = g.tableX + g.border + cellWidth * (column + 0.5);
+    const edgeY = g.tableY + borderY + cellHeight * (side === "top" ? row : row + 1);
+    const centerY = edgeY + (side === "top" ? -1 : 1) * g.gap * g.aspect;
 
     return {
-      left: ((centerX - ballSize / 2 - sceneRect.left) / sceneRect.width) * 100,
-      top: ((centerY - ballSize / 2 - sceneRect.top) / sceneRect.height) * 100,
+      left: centerX - g.ballSize / 2,
+      top: centerY - (g.ballSize / 2) * g.aspect,
       centerX,
       centerY,
     };
   }
 
   getPaddlePosition(side, target) {
-    const sceneRect = this.root.getBoundingClientRect();
     const offset = this.paddleOffsets[side];
     return {
-      left: ((target.centerX - sceneRect.left - offset.left) / sceneRect.width) * 100,
-      top: ((target.centerY - sceneRect.top - offset.top) / sceneRect.height) * 100,
+      left: target.centerX - offset.left,
+      top: target.centerY - offset.top,
     };
   }
 

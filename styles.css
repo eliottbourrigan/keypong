@@ -20,7 +20,7 @@
 
 html,
 body {
-  min-height: 100%;
+  height: 100%;
 }
 
 body {
@@ -34,14 +34,47 @@ body {
   font-family: Arial, sans-serif;
 }
 
+/* --app-height / --app-top sont mis à jour par le JS (clavier mobile ouvert). */
+.app {
+  position: fixed;
+  top: var(--app-top, 0);
+  left: 0;
+  width: 100%;
+  height: var(--app-height, 100dvh);
+  display: flex;
+  flex-direction: column;
+  /* hauteur réservée au header, au footer, aux deux panneaux de mots et aux marges */
+  --chrome: 190px;
+}
+
+.site-header {
+  padding: 10px 0 0;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.32em;
+  text-align: center;
+}
+
+.site-footer {
+  padding: 6px 12px 8px;
+  color: #9a9a9a;
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+.site-footer a {
+  color: inherit;
+}
+
 .game {
   display: grid;
-  min-height: 100vh;
-  min-height: 100svh;
+  flex: 1;
+  min-height: 0;
   align-content: center;
   gap: 4px;
   place-items: center;
-  padding: 24px;
+  padding: 0 12px;
 }
 
 .word-panel {
@@ -99,10 +132,13 @@ body {
   transform: scale(1);
 }
 
+/* La scène garde un ratio fixe et tient toujours dans l'espace disponible.
+   container-type: les tailles internes (cqw) suivent sa largeur. */
 .scene {
   position: relative;
-  width: min(60vw, 390px);
+  width: min(86vw, 390px, calc((var(--app-height, 100dvh) - var(--chrome)) * 0.53));
   aspect-ratio: 0.53;
+  container-type: size;
 }
 
 .table {
@@ -110,8 +146,8 @@ body {
   inset: 17% 14%;
   overflow: hidden;
   background: var(--table);
-  border: clamp(4px, 0.7vw, 6px) solid var(--table-outline);
-  box-shadow: 7px 8px 0 rgb(184 116 30 / 12%);
+  border: 1.5cqw solid var(--table-outline);
+  box-shadow: 1.8cqw 2cqw 0 rgb(184 116 30 / 12%);
 }
 
 .letter-grid {
@@ -146,17 +182,17 @@ body {
 
 .letter-cell__value {
   display: grid;
-  width: clamp(29px, 8vw, 42px);
+  width: 10.5cqw;
   aspect-ratio: 1;
   place-items: center;
   color: var(--player-color);
   background: transparent;
   font-family: "Trebuchet MS", Arial, sans-serif;
-  font-size: clamp(1.25rem, 5vw, 1.8rem);
+  font-size: 7.4cqw;
   font-weight: 900;
-  filter: drop-shadow(3px 3px 0 var(--letter-depth));
+  filter: drop-shadow(0.8cqw 0.8cqw 0 var(--letter-depth));
   paint-order: stroke fill;
-  -webkit-text-stroke: 4px var(--letter-depth);
+  -webkit-text-stroke: 1cqw var(--letter-depth);
   transition: color 120ms ease, background-color 120ms ease, transform 120ms ease;
 }
 
@@ -182,7 +218,7 @@ body {
   width: 102%;
   height: 4.3%;
   background: var(--net);
-  border-block: clamp(3px, 0.55vw, 5px) solid var(--ink);
+  border-block: 1.2cqw solid var(--ink);
 }
 
 .ball {
@@ -193,22 +229,22 @@ body {
   width: 8.5%;
   aspect-ratio: 1;
   background: var(--ball);
-  border: clamp(2px, 0.4vw, 4px) solid var(--ink);
+  border: 0.9cqw solid var(--ink);
   border-radius: 50%;
-  box-shadow: 2px 3px 0 rgb(21 21 21 / 12%);
+  box-shadow: 0.5cqw 0.8cqw 0 rgb(21 21 21 / 12%);
 }
 
 .shot-callout {
   position: absolute;
   z-index: 7;
-  top: calc(48.2% + 4px);
+  top: calc(48.2% + 1cqw);
   left: 50%;
   padding: 7px 11px 6px;
   color: #fff;
   background: var(--shot-color, var(--red));
   box-shadow: 3px 4px 0 rgb(21 21 21 / 22%);
   font-family: "Trebuchet MS", Arial, sans-serif;
-  font-size: clamp(1rem, 4vw, 1.45rem);
+  font-size: 5.6cqw;
   font-weight: 900;
   letter-spacing: 0.06em;
   line-height: 1;
@@ -228,7 +264,7 @@ body {
   z-index: 4;
   width: 10%;
   aspect-ratio: 1;
-  border: clamp(1px, 0.3vw, 2px) solid rgb(255 255 255 / 90%);
+  border: 0.5cqw solid rgb(255 255 255 / 90%);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -277,27 +313,6 @@ body {
   bottom: 1%;
 }
 
-@media (max-width: 600px), (max-aspect-ratio: 3 / 4) {
-  .scene {
-    width: min(82vw, 390px);
-  }
-}
-
-@media (max-height: 650px) {
-  .game {
-    gap: 4px;
-    padding: 8px;
-  }
-
-  .word-panel {
-    min-height: 38px;
-  }
-
-  .scene {
-    width: min(42vh, 280px);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -310,7 +325,7 @@ body {
 .mobile-input {
   position: fixed;
   left: 0;
-  bottom: 0;
+  top: 0;
   width: 1px;
   height: 1px;
   opacity: 0;
