@@ -44,11 +44,13 @@ body {
   display: flex;
   flex-direction: column;
   /* hauteur réservée au header, au footer, aux deux panneaux de mots et aux marges */
-  --chrome: 190px;
+  --chrome: 204px;
 }
 
 .site-header {
-  padding: 10px 0 0;
+  padding: 10px 0;
+  background: #fff;
+  border-bottom: 4px solid var(--ink);
   color: var(--ink);
   font-size: 0.95rem;
   font-weight: 900;
