@@ -72,16 +72,33 @@ class PingPongScene {
   }
 
   // Suit la zone réellement visible (clavier mobile ouvert) pour dimensionner le jeu.
+  // Le footer reste calé en bas de la hauteur complète : le clavier le recouvre au lieu de le faire monter.
   trackViewport() {
     const viewport = window.visualViewport;
     if (!viewport) return;
+    const style = document.documentElement.style;
+    const header = document.querySelector(".site-header");
+    const footer = document.querySelector(".site-footer");
+    let fullHeight = viewport.height;
+    let lastWidth = viewport.width;
+
     const update = () => {
-      const style = document.documentElement.style;
-      style.setProperty("--app-height", `${viewport.height}px`);
+      // Une largeur différente = rotation ou redimensionnement : on repart de zéro.
+      if (viewport.width !== lastWidth) fullHeight = 0;
+      lastWidth = viewport.width;
+      fullHeight = Math.max(fullHeight, viewport.height, window.innerHeight);
+      const keyboardOpen = viewport.height < fullHeight - 120;
+      const footerSpace = keyboardOpen ? 0 : footer.offsetHeight;
+      style.setProperty("--full-height", `${fullHeight}px`);
       style.setProperty("--app-top", `${viewport.offsetTop}px`);
+      style.setProperty(
+        "--game-height",
+        `${viewport.height - header.offsetHeight - footerSpace}px`,
+      );
     };
     viewport.addEventListener("resize", update);
     viewport.addEventListener("scroll", update);
+    window.addEventListener("orientationchange", () => window.setTimeout(update, 250));
     update();
   }
 

@@ -34,17 +34,17 @@ body {
   font-family: Arial, sans-serif;
 }
 
-/* --app-height / --app-top sont mis à jour par le JS (clavier mobile ouvert). */
+/* --full-height / --app-top / --game-height sont mis à jour par le JS (clavier mobile ouvert). */
 .app {
   position: fixed;
   top: var(--app-top, 0);
   left: 0;
   width: 100%;
-  height: var(--app-height, 100dvh);
+  height: var(--full-height, 100dvh);
   display: flex;
   flex-direction: column;
-  /* hauteur réservée au header, au footer, aux deux panneaux de mots et aux marges */
-  --chrome: 204px;
+  /* hauteur réservée aux deux panneaux de mots, aux écarts et aux marges */
+  --panels: 106px;
 }
 
 .site-header {
@@ -59,6 +59,7 @@ body {
 }
 
 .site-footer {
+  margin-top: auto;
   padding: 6px 12px 8px;
   color: #9a9a9a;
   font-size: 0.7rem;
@@ -71,8 +72,8 @@ body {
 
 .game {
   display: grid;
-  flex: 1;
-  min-height: 0;
+  flex: none;
+  height: var(--game-height, calc(100dvh - 80px));
   align-content: center;
   gap: 4px;
   place-items: center;
@@ -138,8 +139,9 @@ body {
    container-type: les tailles internes (cqw) suivent sa largeur. */
 .scene {
   position: relative;
-  width: min(86vw, 390px, calc((var(--app-height, 100dvh) - var(--chrome)) * 0.53));
+  width: min(86vw, 390px, calc((var(--game-height, calc(100dvh - 80px)) - var(--panels)) * 0.53));
   aspect-ratio: 0.53;
+  transition: width 250ms ease;
   container-type: size;
 }
 
