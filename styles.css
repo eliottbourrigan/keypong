@@ -118,15 +118,14 @@ body {
   gap: 8px;
 }
 
+/* --fit (≤ 1) est calculé en JS pour que les mots longs rétrécissent au lieu d'être coupés. */
 .typed-word {
-  overflow: hidden;
-  max-width: 90%;
+  flex-shrink: 0;
   color: var(--player-color);
-  font-size: calc(var(--scene-w) * 0.12);
+  font-size: calc(var(--scene-w) * 0.12 * var(--fit, 1));
   font-weight: 900;
   letter-spacing: 0.08em;
   line-height: 1;
-  text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
 }

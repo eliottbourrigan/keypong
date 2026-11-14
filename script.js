@@ -95,6 +95,8 @@ class PingPongScene {
         "--game-height",
         `${viewport.height - header.offsetHeight - footerSpace}px`,
       );
+      this.fitTypedWord("top");
+      this.fitTypedWord("bottom");
     };
     viewport.addEventListener("resize", update);
     viewport.addEventListener("scroll", update);
@@ -300,6 +302,7 @@ class PingPongScene {
 
     this.elements.typedWords[side].textContent = this.typedWord || "-";
     this.elements.typedWords[side].classList.toggle("is-valid", this.wordState.valid);
+    this.fitTypedWord(side);
     Object.entries(this.elements.wordValids).forEach(([player, wordValid]) => {
       wordValid.classList.toggle("is-visible", player === side && this.wordState.valid);
     });
@@ -618,6 +621,19 @@ class PingPongScene {
 
   hideShotCallout() {
     this.elements.shotCallout.classList.remove("is-visible");
+  }
+
+  // Réduit la taille du mot pour qu'il tienne toujours en largeur (via --fit, un facteur sans unité).
+  fitTypedWord(side) {
+    const word = this.elements.typedWords[side];
+    const entry = word.parentElement;
+    const check = this.elements.wordValids[side];
+    word.style.setProperty("--fit", "1");
+    const gap = parseFloat(getComputedStyle(entry).columnGap) || 0;
+    const available = entry.clientWidth - check.offsetWidth - gap;
+    if (word.scrollWidth > available) {
+      word.style.setProperty("--fit", (available / word.scrollWidth).toFixed(3));
+    }
   }
 
   popTypedWord(side) {
