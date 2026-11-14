@@ -203,14 +203,11 @@ body {
   width: 10.5cqw;
   aspect-ratio: 1;
   place-items: center;
-  color: var(--player-color);
+  color: var(--letter-depth);
   background: transparent;
   font-family: "Trebuchet MS", Arial, sans-serif;
   font-size: 7.4cqw;
   font-weight: 900;
-  filter: drop-shadow(0.8cqw 0.8cqw 0 var(--letter-depth));
-  paint-order: stroke fill;
-  -webkit-text-stroke: 1cqw var(--letter-depth);
   transition: color 120ms ease, background-color 120ms ease, transform 120ms ease;
 }
 
@@ -223,7 +220,7 @@ body {
 }
 
 .letter-cell.is-included .letter-cell__value {
-  color: #fff;
+  color: var(--letter-depth);
   background: transparent;
   transform: scale(1.13) rotate(-3deg);
 }
