@@ -391,14 +391,6 @@ body {
   pointer-events: none;
 }
 
-/* Calque des raquettes : sert de support au filtre de pixelisation (essai). */
-.paddle-layer {
-  position: absolute;
-  z-index: 6;
-  inset: 0;
-  pointer-events: none;
-}
-
 .paddle {
   position: absolute;
   z-index: 6;
