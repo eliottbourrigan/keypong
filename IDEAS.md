@@ -10,6 +10,8 @@ Fichier de référence pour toutes les idées du projet. On y ajoute, on n'y sup
 
 ## Problèmes connus
 
+Une proposition de mécanique qui répond à ces deux problèmes est détaillée dans `GAMEPLAY.md`.
+
 - **Le Z est trop fort** : n'importe quel verbe conjugué à la 2e personne du pluriel (« -EZ ») rapporte 10 points de plus, et ces formes existent pour presque tous les verbes. Le Z n'est donc pas une lettre rare dans les faits.
 - **Les six lettres adverses ne restreignent pas assez** : le mot doit seulement contenir une des six lettres du camp d'en face, ce qui est presque toujours le cas. Le choix des mots n'est quasiment pas contraint.
 
