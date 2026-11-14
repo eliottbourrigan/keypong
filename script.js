@@ -171,7 +171,8 @@ class PingPongScene {
     cell.querySelector(".letter-cell__value").textContent = letter;
     const stars = cell.querySelector(".letter-cell__stars");
     const count = PingPongScene.LETTER_STARS[letter] ?? 1;
-    stars.textContent = "★".repeat(count);
+    // 5 étoiles : sur deux lignes (3 + 2).
+    stars.textContent = count === 5 ? "★★★\n★★" : "★".repeat(count);
     stars.dataset.stars = count;
   }
 
