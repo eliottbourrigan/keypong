@@ -231,9 +231,13 @@ body {
 }
 
 .letter-cell.is-included .letter-cell__value {
-  color: var(--letter-depth);
+  color: #fff;
   background: transparent;
   transform: scale(1.13) rotate(-3deg);
+}
+
+.letter-cell.is-included .letter-cell__stars {
+  color: #fff;
 }
 
 .net {
