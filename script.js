@@ -113,6 +113,9 @@ class PingPongScene {
     input.autocomplete = "off";
     input.autocapitalize = "off";
     input.spellcheck = false;
+    // iOS : coupe l'autocorrection et les suggestions (barre prédictive au-dessus du clavier).
+    input.setAttribute("autocorrect", "off");
+    input.setAttribute("enterkeyhint", "done");
     input.autofocus = true;
     input.setAttribute("aria-label", "Saisie");
     input.value = "#";
