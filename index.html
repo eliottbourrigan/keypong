@@ -8,7 +8,7 @@
       content="Une table de ping-pong minimaliste aux couleurs vives."
     />
     <title>KeyPong</title>
-    <link rel="stylesheet" href="styles.css?v=20261114205501" />
+    <link rel="stylesheet" href="styles.css?v=20261114210007" />
   </head>
   <body>
     <div class="app">
@@ -29,35 +29,35 @@
 
         <div class="clock" aria-hidden="true">
           <div class="clock__time" data-clock-time="top"></div>
-          <svg class="hourglass" data-hourglass viewBox="0 0 12 18" shape-rendering="crispEdges">
+          <!-- Sablier en traits vectoriels, même style que les raquettes (contour épais, aplats). -->
+          <svg class="hourglass" data-hourglass viewBox="0 0 60 90">
             <defs>
               <clipPath id="hourglass-glass">
-                <path d="M1 2H11V5H10V6H9V7H8V8H7V10H8V11H9V12H10V13H11V16H1V13H2V12H3V11H4V10H5V8H4V7H3V6H2V5H1Z" />
+                <path d="M12 14H48V26L33 45L48 64V76H12V64L27 45L12 26Z" />
               </clipPath>
             </defs>
-            <path
-              d="M1 2H11V5H10V6H9V7H8V8H7V10H8V11H9V12H10V13H11V16H1V13H2V12H3V11H4V10H5V8H4V7H3V6H2V5H1Z"
-              fill="#fffaf0"
-              stroke="#151515"
-              stroke-width="1"
-            />
-            <g class="hourglass__sand" clip-path="url(#hourglass-glass)" fill="#e2b257">
-              <rect data-sand-top x="0" y="3" width="12" height="6" />
-              <rect data-sand-bottom x="0" y="16" width="12" height="0" />
-              <line
-                class="hourglass__stream"
-                data-sand-stream
-                x1="6"
-                y1="9"
-                x2="6"
-                y2="16"
-                stroke="#e2b257"
-                stroke-width="1"
-                visibility="hidden"
-              />
+            <g stroke="#252323" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+              <path fill="#fffaf0" d="M12 14H48V26L33 45L48 64V76H12V64L27 45L12 26Z" />
+              <g class="hourglass__sand" clip-path="url(#hourglass-glass)" stroke="none" fill="#e9a23b">
+                <rect data-sand-top x="0" y="20" width="60" height="25" />
+                <rect data-sand-bottom x="0" y="76" width="60" height="0" />
+                <line
+                  class="hourglass__stream"
+                  data-sand-stream
+                  x1="30"
+                  y1="45"
+                  x2="30"
+                  y2="76"
+                  stroke="#e9a23b"
+                  stroke-width="3"
+                  stroke-linecap="butt"
+                  visibility="hidden"
+                />
+              </g>
+              <path fill="none" d="M12 14H48V26L33 45L48 64V76H12V64L27 45L12 26Z" />
+              <rect fill="#f9d495" x="5" y="4" width="50" height="10" rx="2" />
+              <rect fill="#f9d495" x="5" y="76" width="50" height="10" rx="2" />
             </g>
-            <rect x="0" y="0" width="12" height="2" fill="#151515" />
-            <rect x="0" y="16" width="12" height="2" fill="#151515" />
           </svg>
           <div class="clock__time" data-clock-time="bottom"></div>
         </div>
@@ -65,6 +65,7 @@
         <div class="ball" data-ball aria-label="Balle de ping-pong"></div>
         <div class="shot-callout" data-shot-callout role="status" aria-live="polite"></div>
 
+        <div class="paddle-layer" data-paddle-layer>
         <div class="paddle paddle--top" data-paddle="top" aria-label="Raquette bleue du haut">
           <div class="paddle__body" data-paddle-body>
             <img class="paddle__icon" src="raquette-bleue.svg" alt="" />
@@ -77,6 +78,7 @@
             <img class="paddle__icon" src="raquette.svg" alt="" />
             <span class="paddle__sweet-spot" data-sweet-spot aria-hidden="true"></span>
           </div>
+        </div>
         </div>
       </div>
 
@@ -96,6 +98,6 @@
     </div>
 
     <script src="dictionary.js"></script>
-    <script src="script.js?v=20261114205501"></script>
+    <script src="script.js?v=20261114210007"></script>
   </body>
 </html>

@@ -371,13 +371,13 @@ body {
 }
 
 .hourglass__stream {
-  stroke-dasharray: 1 1;
+  stroke-dasharray: 4 4;
   animation: sand-fall 240ms linear infinite;
 }
 
 @keyframes sand-fall {
   to {
-    stroke-dashoffset: -2;
+    stroke-dashoffset: -8;
   }
 }
 
@@ -388,6 +388,14 @@ body {
   aspect-ratio: 1;
   border: 0.5cqw solid rgb(255 255 255 / 90%);
   border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Calque des raquettes : sert de support au filtre de pixelisation (essai). */
+.paddle-layer {
+  position: absolute;
+  z-index: 6;
+  inset: 0;
   pointer-events: none;
 }
 

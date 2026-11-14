@@ -70,6 +70,7 @@ class PingPongScene {
 
     window.addEventListener("keydown", (event) => this.handleKeyDown(event));
     this.setupMobileInput();
+    this.setupPixelFilter();
     this.trackViewport();
     // Le navigateur suspend l'audio quand l'onglet est caché : on le relance au retour.
     document.addEventListener("visibilitychange", () => {
@@ -80,6 +81,30 @@ class PingPongScene {
     this.root.dataset.state = "waiting";
     this.root.dataset.turn = this.activeSide;
     this.root.dataset.ready = "true";
+  }
+
+  // Essai : pixelise les raquettes avec un filtre SVG (activé par ?pixel=N, N = taille du pixel).
+  // Chaque bloc N×N prend la couleur de son pixel central (pas de moyenne) :
+  // on ne garde qu'un pixel par bloc, puis on le dilate pour remplir le bloc.
+  setupPixelFilter() {
+    const param = new URLSearchParams(window.location.search).get("pixel");
+    if (param === null) return;
+    const size = Math.max(3, (parseInt(param, 10) || 3) | 1); // impair, 3 minimum
+    const half = (size - 1) / 2;
+    const holder = document.createElement("div");
+    holder.innerHTML = `
+      <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <filter id="pixelate" x="0" y="0" width="100%" height="100%"
+          filterUnits="objectBoundingBox" color-interpolation-filters="sRGB">
+          <feFlood x="${half}" y="${half}" width="1" height="1" flood-color="#000" />
+          <feComposite width="${size}" height="${size}" />
+          <feTile result="grid" />
+          <feComposite in="SourceGraphic" in2="grid" operator="in" />
+          <feMorphology operator="dilate" radius="${half}" />
+        </filter>
+      </svg>`;
+    document.body.append(holder.firstElementChild);
+    this.root.querySelector("[data-paddle-layer]").style.filter = "url(#pixelate)";
   }
 
   // Suit la zone réellement visible (clavier mobile ouvert) pour dimensionner le jeu.
@@ -565,10 +590,10 @@ class PingPongScene {
   // progress : 0 = tout le sable en haut, 1 = tout en bas.
   setSand(progress, running) {
     const { sandTop, sandBottom, sandStream } = this.elements;
-    sandTop.setAttribute("y", 3 + 6 * progress);
-    sandTop.setAttribute("height", 6 * (1 - progress));
-    sandBottom.setAttribute("y", 16 - 6 * progress);
-    sandBottom.setAttribute("height", 6 * progress);
+    sandTop.setAttribute("y", 20 + 25 * progress);
+    sandTop.setAttribute("height", 25 * (1 - progress));
+    sandBottom.setAttribute("y", 76 - 25 * progress);
+    sandBottom.setAttribute("height", 25 * progress);
     sandStream.setAttribute("visibility", running ? "visible" : "hidden");
   }
 
