@@ -590,10 +590,10 @@ class PingPongScene {
   // progress : 0 = tout le sable en haut, 1 = tout en bas.
   setSand(progress, running) {
     const { sandTop, sandBottom, sandStream } = this.elements;
-    sandTop.setAttribute("y", 20 + 25 * progress);
-    sandTop.setAttribute("height", 25 * (1 - progress));
-    sandBottom.setAttribute("y", 76 - 25 * progress);
-    sandBottom.setAttribute("height", 25 * progress);
+    sandTop.setAttribute("y", 12 + 33 * progress);
+    sandTop.setAttribute("height", 33 * (1 - progress));
+    sandBottom.setAttribute("y", 78 - 33 * progress);
+    sandBottom.setAttribute("height", 33 * progress);
     sandStream.setAttribute("visibility", running ? "visible" : "hidden");
   }
 

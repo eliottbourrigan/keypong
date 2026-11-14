@@ -327,17 +327,17 @@ body {
   position: absolute;
   z-index: 4;
   top: 50.2%;
-  left: 93%;
+  left: 94%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.6cqw;
+  gap: 3.4cqw;
   transform: translate(-50%, -50%);
 }
 
 .clock__time {
   color: var(--muted);
-  font-size: 6.4cqw;
+  font-size: 6cqw;
   font-weight: 400;
   line-height: 1;
   white-space: nowrap;
