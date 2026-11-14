@@ -21,7 +21,7 @@ Idée : 4 raretés, fondées sur la fréquence des lettres dans le dictionnaire 
 
 **Implémenté** :
 - Tirage pondéré (`LETTER_WEIGHTS`) : 1★ ≈ 65 %, 2★ ≈ 22 %, 3★ ≈ 10 %, 5★ ≈ 2 %.
-- Puissance d'un coup = somme des étoiles du mot, sans plafond. Délai de réponse adverse (= durée du vol de la balle) = 0,5 s + 13,5 s / étoiles, soit environ 2 s pour un mot moyen de 6 lettres (~9 étoiles).
+- Puissance d'un coup = somme des étoiles du mot, sans plafond. Délai de réponse adverse (= durée du vol de la balle) = 0,5 s + 27 s / étoiles, soit environ 3,5 s pour un mot moyen de 6 lettres (~9 étoiles).
 - Balle non rattrapée avant d'arriver = victoire du frappeur (texte 3 s, puis nouvelle partie). On peut intercepter en vol avec un mot valide.
 
 Pistes :

@@ -210,9 +210,9 @@ class PingPongScene {
   }
 
   // Délai de réponse laissé à l'adversaire (= durée du vol de la balle), en ms.
-  // Toujours au moins 0,5 s ; un mot moyen de 6 lettres (~9 étoiles) donne 2 s.
+  // Toujours au moins 0,5 s ; un mot moyen de 6 lettres (~9 étoiles) donne 3,5 s.
   getResponseTime(stars) {
-    return 500 + 13500 / Math.max(1, stars);
+    return 500 + 27000 / Math.max(1, stars);
   }
 
   createLetterGrid() {
