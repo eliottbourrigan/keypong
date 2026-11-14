@@ -120,14 +120,41 @@ body {
 
 /* --fit (≤ 1) est calculé en JS pour que les mots longs rétrécissent au lieu d'être coupés. */
 .typed-word {
+  display: inline-flex;
   flex-shrink: 0;
+  gap: 0.1em;
   color: var(--player-color);
-  font-size: calc(var(--scene-w) * 0.12 * var(--fit, 1));
+  font-size: calc(var(--scene-w) * 0.1 * var(--fit, 1));
   font-weight: 900;
-  letter-spacing: 0.08em;
   line-height: 1;
-  text-transform: uppercase;
   white-space: nowrap;
+}
+
+/* Tuile de Scrabble : la taille suit la font-size du mot (1em de côté). */
+.tile {
+  position: relative;
+  display: grid;
+  width: 1em;
+  height: 1em;
+  place-items: center;
+  color: #4a2c14;
+  background: #f0deb4;
+  border-radius: 0.14em;
+  box-shadow: 0 0.09em 0 #c4a46c;
+  font-family: "Trebuchet MS", Arial, sans-serif;
+}
+
+.tile__letter {
+  font-size: 0.66em;
+  font-weight: 900;
+}
+
+.tile__points {
+  position: absolute;
+  right: 0.09em;
+  bottom: 0.05em;
+  font-size: 0.26em;
+  font-weight: 900;
 }
 
 .typed-word.is-valid {
@@ -212,14 +239,13 @@ body {
   transition: color 120ms ease, background-color 120ms ease, transform 120ms ease;
 }
 
-.letter-cell__stars {
-  margin-top: -1.2cqw;
+.letter-cell__points {
+  margin-top: -1cqw;
   color: var(--letter-depth);
-  font-size: 2.8cqw;
-  letter-spacing: -0.4cqw;
-  line-height: 0.85;
-  text-align: center;
-  white-space: pre-line;
+  font-family: "Trebuchet MS", Arial, sans-serif;
+  font-size: 3.4cqw;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .letter-cell.is-current {
@@ -236,7 +262,7 @@ body {
   transform: scale(1.13) rotate(-3deg);
 }
 
-.letter-cell.is-included .letter-cell__stars {
+.letter-cell.is-included .letter-cell__points {
   color: #fff;
 }
 

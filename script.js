@@ -157,27 +157,50 @@ class PingPongScene {
     };
   }
 
-  // Rareté des lettres (voir IDEAS.md) : nombre d'étoiles affichées sous chaque lettre.
-  static LETTER_STARS = (() => {
-    const tiers = { EAISRNTO: 1, LUCMPD: 2, GBFHV: 3, ZQYXJKW: 5 };
-    const stars = {};
-    Object.entries(tiers).forEach(([letters, count]) => {
-      [...letters].forEach((letter) => (stars[letter] = count));
+  // Valeur des lettres : barème du Scrabble français.
+  static LETTER_POINTS = (() => {
+    const tiers = { EAINORSTUL: 1, DGM: 2, BCP: 3, FHV: 4, JQ: 8, KWXYZ: 10 };
+    const points = {};
+    Object.entries(tiers).forEach(([letters, value]) => {
+      [...letters].forEach((letter) => (points[letter] = value));
     });
-    return stars;
+    return points;
   })();
+
+  getLetterPoints(letter) {
+    return PingPongScene.LETTER_POINTS[letter] ?? 1;
+  }
 
   setCellLetter(cell, letter) {
     cell.querySelector(".letter-cell__value").textContent = letter;
-    const stars = cell.querySelector(".letter-cell__stars");
-    const count = PingPongScene.LETTER_STARS[letter] ?? 1;
-    // 5 étoiles : sur deux lignes (3 + 2).
-    stars.textContent = count === 5 ? "★★★\n★★" : "★".repeat(count);
-    stars.dataset.stars = count;
+    cell.querySelector(".letter-cell__points").textContent = this.getLetterPoints(letter);
+  }
+
+  // Mot en cours affiché en tuiles de Scrabble (lettre + valeur dans le coin).
+  renderTiles(element, word) {
+    if (!word) {
+      element.replaceChildren(document.createTextNode("-"));
+      element.classList.add("is-empty");
+      return;
+    }
+    element.classList.remove("is-empty");
+    const tiles = [...word].map((letter) => {
+      const tile = document.createElement("span");
+      const value = document.createElement("span");
+      const points = document.createElement("span");
+      tile.className = "tile";
+      value.className = "tile__letter";
+      points.className = "tile__points";
+      value.textContent = letter;
+      points.textContent = this.getLetterPoints(letter);
+      tile.append(value, points);
+      return tile;
+    });
+    element.replaceChildren(...tiles);
   }
 
   // Poids d'apparition des lettres sur la table (sur ~100).
-  // 1★ ≈ 65 %, 2★ ≈ 22 %, 3★ ≈ 10 %, 5★ ≈ 2 % (0,3 % par lettre).
+  // Lettres à 1 pt ≈ 74 %, 2-3 pts ≈ 18 %, 4 pts ≈ 6 %, 8-10 pts ≈ 2 % (0,3 % par lettre).
   static LETTER_WEIGHTS = {
     E: 12, A: 9, I: 8, S: 8, R: 8, N: 7, T: 7, O: 6,
     L: 4, U: 4, C: 4, M: 3.5, P: 3.5, D: 3,
@@ -204,15 +227,15 @@ class PingPongScene {
     return letters;
   }
 
-  // Puissance d'un mot = somme des étoiles de ses lettres.
-  getWordStars(word) {
-    return [...word].reduce((sum, letter) => sum + (PingPongScene.LETTER_STARS[letter] ?? 1), 0);
+  // Puissance d'un mot = somme des points Scrabble de ses lettres.
+  getWordPoints(word) {
+    return [...word].reduce((sum, letter) => sum + this.getLetterPoints(letter), 0);
   }
 
   // Délai de réponse laissé à l'adversaire (= durée du vol de la balle), en ms.
-  // Toujours au moins 0,5 s ; un mot moyen de 6 lettres (~9 étoiles) donne 3,5 s.
-  getResponseTime(stars) {
-    return 500 + 27000 / Math.max(1, stars);
+  // Toujours au moins 0,5 s ; un mot moyen de 6 lettres (~10 points) donne 3,5 s.
+  getResponseTime(points) {
+    return 500 + 30000 / Math.max(1, points);
   }
 
   createLetterGrid() {
@@ -233,11 +256,11 @@ class PingPongScene {
         cell.dataset.owner = owner;
         cell.dataset.letterIndex = letterIndex;
         cell.dataset.lane = lane;
-        const stars = document.createElement("span");
+        const points = document.createElement("span");
         value.className = "letter-cell__value";
-        stars.className = "letter-cell__stars";
-        stars.setAttribute("aria-hidden", "true");
-        cell.append(value, stars);
+        points.className = "letter-cell__points";
+        points.setAttribute("aria-hidden", "true");
+        cell.append(value, points);
         this.setCellLetter(cell, letter);
         fragment.append(cell);
         this.letterCells[owner][letterIndex] = cell;
@@ -354,7 +377,7 @@ class PingPongScene {
       this.elements.ball.style.top = `${target.top}%`;
     }
 
-    this.elements.typedWords[side].textContent = this.typedWord || "-";
+    this.renderTiles(this.elements.typedWords[side], this.typedWord);
     this.elements.typedWords[side].classList.toggle("is-valid", this.wordState.valid);
     this.fitTypedWord(side);
     Object.entries(this.elements.wordValids).forEach(([player, wordValid]) => {
@@ -422,7 +445,7 @@ class PingPongScene {
     const receiverTransforms = this.getPaddleTransforms(targetSide);
     const wordLength = this.wordState.normalized.length;
     const isPowerShot = wordLength > 6;
-    this.travelDuration = this.getResponseTime(this.getWordStars(this.wordState.normalized));
+    this.travelDuration = this.getResponseTime(this.getWordPoints(this.wordState.normalized));
 
     this.playPaddleSound();
     receiver.style.left = `${receiverTargetPosition.left}%`;
