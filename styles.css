@@ -1,4 +1,14 @@
+/* Jersey 15 (SIL Open Font License, voir fonts/OFL.txt) */
+@font-face {
+  font-family: "Jersey 15";
+  src: url("fonts/jersey-15.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
+  --font: "Jersey 15", "Courier New", monospace;
+  --muted: #9a9a9a;
   --background: #fff;
   --grid: #edf0f2;
   --table: #5f8f78;
@@ -31,7 +41,8 @@ body {
     linear-gradient(var(--grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid) 1px, transparent 1px);
   background-size: 28px 28px;
-  font-family: Arial, sans-serif;
+  font-family: var(--font);
+  font-synthesis: none;
 }
 
 /* --full-height / --app-top / --game-height sont mis à jour par le JS (clavier mobile ouvert). */
@@ -55,8 +66,8 @@ body {
   background: #fff;
   border-bottom: 4px solid var(--ink);
   color: var(--ink);
-  font-size: 0.95rem;
-  font-weight: 900;
+  font-size: 1.5rem;
+  font-weight: 400;
   letter-spacing: 0.32em;
   text-align: center;
 }
@@ -64,8 +75,8 @@ body {
 .site-footer {
   margin-top: auto;
   padding: 6px 12px 8px;
-  color: #9a9a9a;
-  font-size: 0.7rem;
+  color: var(--muted);
+  font-size: 0.85rem;
   text-align: center;
 }
 
@@ -125,7 +136,7 @@ body {
   gap: 0.1em;
   color: var(--player-color);
   font-size: calc(var(--scene-w) * 0.1 * var(--fit, 1));
-  font-weight: 900;
+  font-weight: 400;
   line-height: 1;
   white-space: nowrap;
 }
@@ -141,20 +152,19 @@ body {
   background: #f0deb4;
   border-radius: 0.14em;
   box-shadow: 0 0.09em 0 #c4a46c;
-  font-family: "Trebuchet MS", Arial, sans-serif;
 }
 
 .tile__letter {
-  font-size: 0.66em;
-  font-weight: 900;
+  font-size: 0.86em;
+  font-weight: 400;
 }
 
 .tile__points {
   position: absolute;
   right: 0.09em;
-  bottom: 0.05em;
-  font-size: 0.26em;
-  font-weight: 900;
+  bottom: 0.02em;
+  font-size: 0.34em;
+  font-weight: 400;
 }
 
 .typed-word.is-valid {
@@ -164,7 +174,7 @@ body {
 .word-valid {
   color: var(--valid);
   font-size: 1.4rem;
-  font-weight: 900;
+  font-weight: 400;
   opacity: 0;
   transform: scale(0.5);
   transition: opacity 120ms ease, transform 120ms ease;
@@ -233,18 +243,16 @@ body {
   place-items: center;
   color: var(--letter-depth);
   background: transparent;
-  font-family: "Trebuchet MS", Arial, sans-serif;
-  font-size: 7.4cqw;
-  font-weight: 900;
+  font-size: 10cqw;
+  font-weight: 400;
   transition: color 120ms ease, background-color 120ms ease, transform 120ms ease;
 }
 
 .letter-cell__points {
-  margin-top: -1cqw;
+  margin-top: -1.4cqw;
   color: var(--letter-depth);
-  font-family: "Trebuchet MS", Arial, sans-serif;
-  font-size: 3.4cqw;
-  font-weight: 900;
+  font-size: 4.4cqw;
+  font-weight: 400;
   line-height: 1;
 }
 
@@ -299,9 +307,8 @@ body {
   color: #fff;
   background: var(--shot-color, var(--red));
   box-shadow: 3px 4px 0 rgb(21 21 21 / 22%);
-  font-family: "Trebuchet MS", Arial, sans-serif;
   font-size: 5.6cqw;
-  font-weight: 900;
+  font-weight: 400;
   letter-spacing: 0.06em;
   line-height: 1;
   opacity: 0;
@@ -313,6 +320,65 @@ body {
 .shot-callout.is-visible {
   opacity: 1;
   transform: translate(-50%, -50%) rotate(-7deg) scale(1);
+}
+
+/* Sablier et timers, à droite de la table, centrés sur le filet. */
+.clock {
+  position: absolute;
+  z-index: 4;
+  top: 50.2%;
+  left: 93%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.6cqw;
+  transform: translate(-50%, -50%);
+}
+
+.clock__time {
+  color: var(--muted);
+  font-size: 6.4cqw;
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.clock__time[data-active="true"][data-clock-time="top"] {
+  color: var(--blue);
+}
+
+.clock__time[data-active="true"][data-clock-time="bottom"] {
+  color: var(--red);
+}
+
+.clock__unit {
+  font-size: 0.62em;
+}
+
+.hourglass {
+  display: block;
+  width: 8cqw;
+  height: 12cqw;
+  overflow: visible;
+}
+
+.hourglass__sand {
+  transition: opacity 80ms linear;
+}
+
+.hourglass.is-flipping .hourglass__sand {
+  opacity: 0;
+}
+
+.hourglass__stream {
+  stroke-dasharray: 1 1;
+  animation: sand-fall 240ms linear infinite;
+}
+
+@keyframes sand-fall {
+  to {
+    stroke-dashoffset: -2;
+  }
 }
 
 .bounce-ring {
@@ -387,9 +453,8 @@ body {
   color: #fff;
   background: var(--winner-color);
   box-shadow: 4px 5px 0 rgb(21 21 21 / 25%);
-  font-family: "Trebuchet MS", Arial, sans-serif;
   font-size: 2rem;
-  font-weight: 900;
+  font-weight: 400;
   letter-spacing: 0.06em;
   transform: translate(-50%, -50%) rotate(-4deg);
   white-space: nowrap;

@@ -20,6 +20,8 @@ class PingPongScene {
 
     this.gameOver = false;
     this.pendingReturn = false;
+    this.clock = null;
+    this.clockFrame = null;
     this.positions = { top: 0, bottom: 0 };
     this.paddleOffsets = { top: null, bottom: null };
     this.letters = {
@@ -43,6 +45,14 @@ class PingPongScene {
         top: document.querySelector('[data-typed-word="top"]'),
         bottom: document.querySelector('[data-typed-word="bottom"]'),
       },
+      clockTimes: {
+        top: root.querySelector('[data-clock-time="top"]'),
+        bottom: root.querySelector('[data-clock-time="bottom"]'),
+      },
+      hourglass: root.querySelector("[data-hourglass]"),
+      sandTop: root.querySelector("[data-sand-top]"),
+      sandBottom: root.querySelector("[data-sand-bottom]"),
+      sandStream: root.querySelector("[data-sand-stream]"),
       wordValids: {
         top: document.querySelector('[data-word-valid="top"]'),
         bottom: document.querySelector('[data-word-valid="bottom"]'),
@@ -55,6 +65,7 @@ class PingPongScene {
     this.createLetterGrid();
     this.calibratePaddles();
     this.placeElements();
+    this.resetClock();
     this.updateWordState();
 
     window.addEventListener("keydown", (event) => this.handleKeyDown(event));
@@ -377,6 +388,9 @@ class PingPongScene {
       this.elements.ball.style.top = `${target.top}%`;
     }
 
+    Object.entries(this.elements.clockTimes).forEach(([player, time]) => {
+      time.dataset.active = player === side;
+    });
     this.renderTiles(this.elements.typedWords[side], this.typedWord);
     this.elements.typedWords[side].classList.toggle("is-valid", this.wordState.valid);
     this.fitTypedWord(side);
@@ -448,6 +462,7 @@ class PingPongScene {
     this.travelDuration = this.getResponseTime(this.getWordPoints(this.wordState.normalized));
 
     this.playPaddleSound();
+    this.startClock(targetSide, this.travelDuration);
     receiver.style.left = `${receiverTargetPosition.left}%`;
     receiver.style.top = `${receiverTargetPosition.top}%`;
     receiver.style.transform = receiverTransforms.recoil;
@@ -528,8 +543,80 @@ class PingPongScene {
     if (caught && this.wordState.valid) {
       this.returnBall();
     } else if (!caught) {
+      this.stopClock();
       this.showVictory(fromSide);
     }
+  }
+
+  // --- Sablier et timers -------------------------------------------------
+
+  // Affiche un temps restant au format "5.2S" (null = pas de chrono : "-.-S").
+  setClockTime(side, milliseconds) {
+    const element = this.elements.clockTimes[side];
+    const value = milliseconds === null ? "-.-" : (Math.floor(milliseconds / 100) / 10).toFixed(1);
+    if (element.dataset.value === value) return;
+    element.dataset.value = value;
+    const unit = document.createElement("span");
+    unit.className = "clock__unit";
+    unit.textContent = "S";
+    element.replaceChildren(document.createTextNode(value), unit);
+  }
+
+  // progress : 0 = tout le sable en haut, 1 = tout en bas.
+  setSand(progress, running) {
+    const { sandTop, sandBottom, sandStream } = this.elements;
+    sandTop.setAttribute("y", 3 + 6 * progress);
+    sandTop.setAttribute("height", 6 * (1 - progress));
+    sandBottom.setAttribute("y", 16 - 6 * progress);
+    sandBottom.setAttribute("height", 6 * progress);
+    sandStream.setAttribute("visibility", running ? "visible" : "hidden");
+  }
+
+  getClockRemaining() {
+    if (!this.clock) return null;
+    return Math.max(0, this.clock.duration - (performance.now() - this.clock.start));
+  }
+
+  // Lance le chrono du joueur qui doit répondre et retourne le sablier.
+  startClock(side, duration) {
+    this.stopClock();
+    this.clock = { side, start: performance.now(), duration };
+    const hourglass = this.elements.hourglass;
+    hourglass.classList.add("is-flipping");
+    hourglass
+      .animate([{ transform: "rotate(0deg)" }, { transform: "rotate(180deg)" }], {
+        duration: 320,
+        easing: "cubic-bezier(0.3, 0, 0.2, 1)",
+      })
+      .finished.then(() => hourglass.classList.remove("is-flipping"))
+      .catch(() => {});
+
+    const tick = () => {
+      if (!this.clock) return;
+      const remaining = this.getClockRemaining();
+      this.setClockTime(this.clock.side, remaining);
+      this.setSand(1 - remaining / this.clock.duration, remaining > 0);
+      this.clockFrame = remaining > 0 ? window.requestAnimationFrame(tick) : null;
+    };
+    tick();
+  }
+
+  // Fige le chrono sur sa valeur actuelle.
+  stopClock() {
+    if (!this.clock) return;
+    const remaining = this.getClockRemaining();
+    this.setClockTime(this.clock.side, remaining);
+    this.setSand(1 - remaining / this.clock.duration, false);
+    if (this.clockFrame) window.cancelAnimationFrame(this.clockFrame);
+    this.clockFrame = null;
+    this.clock = null;
+  }
+
+  resetClock() {
+    this.stopClock();
+    this.setClockTime("top", null);
+    this.setClockTime("bottom", null);
+    this.setSand(0, false);
   }
 
   // Écran de victoire minimal : un texte 3 s, puis nouvelle partie.
@@ -556,6 +643,8 @@ class PingPongScene {
     this.wordState = this.emptyWordState();
     this.createLetterGrid();
     this.placeElements();
+    this.resetClock();
+    Object.values(this.elements.typedWords).forEach((word) => this.renderTiles(word, ""));
     this.root.dataset.turn = this.activeSide;
     this.root.dataset.state = "waiting";
     this.gameOver = false;

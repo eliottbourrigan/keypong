@@ -8,7 +8,7 @@
       content="Une table de ping-pong minimaliste aux couleurs vives."
     />
     <title>KeyPong</title>
-    <link rel="stylesheet" href="styles.css?v=20261114204332" />
+    <link rel="stylesheet" href="styles.css?v=20261114205501" />
   </head>
   <body>
     <div class="app">
@@ -25,6 +25,41 @@
         <div class="table" data-table>
           <div class="letter-grid" data-letter-grid aria-label="Grille de lettres"></div>
           <div class="net" data-net aria-hidden="true"></div>
+        </div>
+
+        <div class="clock" aria-hidden="true">
+          <div class="clock__time" data-clock-time="top"></div>
+          <svg class="hourglass" data-hourglass viewBox="0 0 12 18" shape-rendering="crispEdges">
+            <defs>
+              <clipPath id="hourglass-glass">
+                <path d="M1 2H11V5H10V6H9V7H8V8H7V10H8V11H9V12H10V13H11V16H1V13H2V12H3V11H4V10H5V8H4V7H3V6H2V5H1Z" />
+              </clipPath>
+            </defs>
+            <path
+              d="M1 2H11V5H10V6H9V7H8V8H7V10H8V11H9V12H10V13H11V16H1V13H2V12H3V11H4V10H5V8H4V7H3V6H2V5H1Z"
+              fill="#fffaf0"
+              stroke="#151515"
+              stroke-width="1"
+            />
+            <g class="hourglass__sand" clip-path="url(#hourglass-glass)" fill="#e2b257">
+              <rect data-sand-top x="0" y="3" width="12" height="6" />
+              <rect data-sand-bottom x="0" y="16" width="12" height="0" />
+              <line
+                class="hourglass__stream"
+                data-sand-stream
+                x1="6"
+                y1="9"
+                x2="6"
+                y2="16"
+                stroke="#e2b257"
+                stroke-width="1"
+                visibility="hidden"
+              />
+            </g>
+            <rect x="0" y="0" width="12" height="2" fill="#151515" />
+            <rect x="0" y="16" width="12" height="2" fill="#151515" />
+          </svg>
+          <div class="clock__time" data-clock-time="bottom"></div>
         </div>
 
         <div class="ball" data-ball aria-label="Balle de ping-pong"></div>
@@ -61,6 +96,6 @@
     </div>
 
     <script src="dictionary.js"></script>
-    <script src="script.js?v=20261114204332"></script>
+    <script src="script.js?v=20261114205501"></script>
   </body>
 </html>
