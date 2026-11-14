@@ -18,8 +18,8 @@ class PingPongScene {
     this.dictionary = new Set(dictionaryWords);
     window.KEYPONG_WORDS = null;
 
-    this.letterPool =
-      "AAAAAAAABBBBCCCCCDDDDDEEEEEEEEEEEEEFFFFGGGGHHHHIIIIIIIIJJLLLLLLMMMMMMNNNNNNNNOOOOOOOPPPPPRRRRRRRRSSSSSSSSTTTTTTTTUUUUUUVVVKKQQWWYY";
+    this.gameOver = false;
+    this.pendingReturn = false;
     this.positions = { top: 0, bottom: 0 };
     this.paddleOffsets = { top: null, bottom: null };
     this.letters = {
@@ -176,15 +176,43 @@ class PingPongScene {
     stars.dataset.stars = count;
   }
 
+  // Poids d'apparition des lettres sur la table (sur ~100).
+  // 1★ ≈ 65 %, 2★ ≈ 22 %, 3★ ≈ 10 %, 5★ ≈ 2 % (0,3 % par lettre).
+  static LETTER_WEIGHTS = {
+    E: 12, A: 9, I: 8, S: 8, R: 8, N: 7, T: 7, O: 6,
+    L: 4, U: 4, C: 4, M: 3.5, P: 3.5, D: 3,
+    G: 2, B: 2, F: 2, H: 2, V: 2,
+    Z: 0.3, Q: 0.3, Y: 0.3, X: 0.3, J: 0.3, K: 0.3, W: 0.3,
+  };
+
+  drawLetter(exclude = []) {
+    const entries = Object.entries(PingPongScene.LETTER_WEIGHTS).filter(
+      ([letter]) => !exclude.includes(letter),
+    );
+    const total = entries.reduce((sum, [, weight]) => sum + weight, 0);
+    let roll = Math.random() * total;
+    for (const [letter, weight] of entries) {
+      roll -= weight;
+      if (roll < 0) return letter;
+    }
+    return entries[entries.length - 1][0];
+  }
+
   generateLetters() {
     const letters = [];
-
-    while (letters.length < 6) {
-      const letter = this.letterPool[Math.floor(Math.random() * this.letterPool.length)];
-      if (!letters.includes(letter)) letters.push(letter);
-    }
-
+    while (letters.length < 6) letters.push(this.drawLetter(letters));
     return letters;
+  }
+
+  // Puissance d'un mot = somme des étoiles de ses lettres.
+  getWordStars(word) {
+    return [...word].reduce((sum, letter) => sum + (PingPongScene.LETTER_STARS[letter] ?? 1), 0);
+  }
+
+  // Délai de réponse laissé à l'adversaire (= durée du vol de la balle), en ms.
+  // Toujours au moins 0,5 s ; un mot moyen de 6 lettres (~9 étoiles) donne 2 s.
+  getResponseTime(stars) {
+    return 500 + 13500 / Math.max(1, stars);
   }
 
   createLetterGrid() {
@@ -223,6 +251,7 @@ class PingPongScene {
   }
 
   handleKeyDown(event) {
+    if (this.gameOver) return;
     if (event.code === "Space") {
       if (event.repeat) return;
       event.preventDefault();
@@ -335,7 +364,9 @@ class PingPongScene {
   }
 
   handleSpacePress() {
-    if (this.isInFlight) {
+    // Balle en vol : un mot valide l'intercepte (la balle arrive tout de suite, puis repart).
+    if (this.isInFlight && this.wordState.valid) {
+      this.pendingReturn = true;
       this.finishCurrentShot();
       return;
     }
@@ -391,6 +422,7 @@ class PingPongScene {
     const receiverTransforms = this.getPaddleTransforms(targetSide);
     const wordLength = this.wordState.normalized.length;
     const isPowerShot = wordLength > 6;
+    this.travelDuration = this.getResponseTime(this.getWordStars(this.wordState.normalized));
 
     this.playPaddleSound();
     receiver.style.left = `${receiverTargetPosition.left}%`;
@@ -466,15 +498,50 @@ class PingPongScene {
     this.hideShotCallout();
     this.root.dataset.state = "waiting";
     this.updateWordState();
+
+    // Balle interceptée à temps : on renvoie. Sinon elle est arrivée : point pour le frappeur.
+    const caught = this.pendingReturn;
+    this.pendingReturn = false;
+    if (caught && this.wordState.valid) {
+      this.returnBall();
+    } else if (!caught) {
+      this.showVictory(fromSide);
+    }
+  }
+
+  // Écran de victoire minimal : un texte 3 s, puis nouvelle partie.
+  showVictory(winner) {
+    this.gameOver = true;
+    this.stopPaddleTremble();
+    const banner = document.createElement("div");
+    banner.className = "victory";
+    banner.style.setProperty("--winner-color", winner === "top" ? "var(--blue)" : "var(--red)");
+    banner.textContent = winner === "top" ? "BLEU GAGNE !" : "ROUGE GAGNE !";
+    document.body.append(banner);
+    window.setTimeout(() => {
+      banner.remove();
+      this.resetGame();
+    }, 3000);
+  }
+
+  resetGame() {
+    this.letters = { top: this.generateLetters(), bottom: this.generateLetters() };
+    this.positions = { top: 0, bottom: 0 };
+    this.requiredStartIndex = { top: null, bottom: null };
+    this.activeSide = "top";
+    this.typedWord = "";
+    this.wordState = this.emptyWordState();
+    this.createLetterGrid();
+    this.placeElements();
+    this.root.dataset.turn = this.activeSide;
+    this.root.dataset.state = "waiting";
+    this.gameOver = false;
+    this.updateWordState();
   }
 
   replaceLetter(side, letterIndex) {
     const letters = this.letters[side];
-    let nextLetter = letters[letterIndex];
-
-    while (letters.includes(nextLetter)) {
-      nextLetter = this.letterPool[Math.floor(Math.random() * this.letterPool.length)];
-    }
+    const nextLetter = this.drawLetter(letters);
 
     letters[letterIndex] = nextLetter;
     const cell = this.letterCells[side][letterIndex];
