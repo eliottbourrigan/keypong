@@ -22,7 +22,7 @@ Idée : 4 raretés, fondées sur la fréquence des lettres dans le dictionnaire 
 **Implémenté** :
 - Tirage pondéré (`LETTER_WEIGHTS`) : 1★ ≈ 65 %, 2★ ≈ 22 %, 3★ ≈ 10 %, 5★ ≈ 2 %.
 - Valeur des lettres : barème du Scrabble français (1, 2, 3, 4, 8, 10 points), remplace les étoiles.
-- Puissance d'un coup = somme des points du mot, sans plafond. Délai de réponse adverse (= durée du vol de la balle) = 0,5 s + 30 s / points, soit environ 3,5 s pour un mot moyen de 6 lettres (~10 points).
+- Puissance d'un coup = somme des points du mot, sans plafond. Délai de réponse adverse (= durée du vol de la balle) = base + 30 s / points (base de 0,5 s au service, réduite à chaque coup jusqu'à 0 au 10e coup de l'échange), soit environ 3,5 s pour un mot moyen de 6 lettres (~10 points).
 - Mot en cours affiché en tuiles de Scrabble.
 - Sablier à droite de la table (se retourne à chaque frappe) et timers « 5.2S » par joueur.
 - Balle non rattrapée avant d'arriver = victoire du frappeur (texte 3 s, puis nouvelle partie). On peut intercepter en vol avec un mot valide.

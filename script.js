@@ -20,6 +20,7 @@ class PingPongScene {
 
     this.gameOver = false;
     this.pendingReturn = false;
+    this.rallyShots = 0; // coups joués dans l'échange en cours
     this.clock = null;
     this.clockFrame = null;
     this.positions = { top: 0, bottom: 0 };
@@ -244,9 +245,11 @@ class PingPongScene {
   }
 
   // Délai de réponse laissé à l'adversaire (= durée du vol de la balle), en ms.
-  // Toujours au moins 0,5 s ; un mot moyen de 6 lettres (~10 points) donne 3,5 s.
-  getResponseTime(points) {
-    return 500 + 30000 / Math.max(1, points);
+  // Base de 0,5 s au service, qui diminue à chaque coup de l'échange jusqu'à 0 au 10e coup.
+  // Un mot moyen de 6 lettres (~10 points) donne 3,5 s au service.
+  getResponseTime(points, shotNumber) {
+    const base = 500 * Math.max(0, 1 - (shotNumber - 1) / 9);
+    return base + 30000 / Math.max(1, points);
   }
 
   createLetterGrid() {
@@ -459,7 +462,11 @@ class PingPongScene {
     const receiverTransforms = this.getPaddleTransforms(targetSide);
     const wordLength = this.wordState.normalized.length;
     const isPowerShot = wordLength > 6;
-    this.travelDuration = this.getResponseTime(this.getWordPoints(this.wordState.normalized));
+    this.rallyShots += 1;
+    this.travelDuration = this.getResponseTime(
+      this.getWordPoints(this.wordState.normalized),
+      this.rallyShots,
+    );
 
     this.playPaddleSound();
     this.startClock(targetSide, this.travelDuration);
@@ -635,6 +642,7 @@ class PingPongScene {
   }
 
   resetGame() {
+    this.rallyShots = 0;
     this.letters = { top: this.generateLetters(), bottom: this.generateLetters() };
     this.positions = { top: 0, bottom: 0 };
     this.requiredStartIndex = { top: null, bottom: null };
