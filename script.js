@@ -157,6 +157,24 @@ class PingPongScene {
     };
   }
 
+  // Rareté des lettres (voir IDEAS.md) : nombre d'étoiles affichées sous chaque lettre.
+  static LETTER_STARS = (() => {
+    const tiers = { EAISRNTO: 1, LUCMPD: 2, GBFHV: 3, ZQYXJKW: 5 };
+    const stars = {};
+    Object.entries(tiers).forEach(([letters, count]) => {
+      [...letters].forEach((letter) => (stars[letter] = count));
+    });
+    return stars;
+  })();
+
+  setCellLetter(cell, letter) {
+    cell.querySelector(".letter-cell__value").textContent = letter;
+    const stars = cell.querySelector(".letter-cell__stars");
+    const count = PingPongScene.LETTER_STARS[letter] ?? 1;
+    stars.textContent = "★".repeat(count);
+    stars.dataset.stars = count;
+  }
+
   generateLetters() {
     const letters = [];
 
@@ -186,9 +204,12 @@ class PingPongScene {
         cell.dataset.owner = owner;
         cell.dataset.letterIndex = letterIndex;
         cell.dataset.lane = lane;
+        const stars = document.createElement("span");
         value.className = "letter-cell__value";
-        value.textContent = letter;
-        cell.append(value);
+        stars.className = "letter-cell__stars";
+        stars.setAttribute("aria-hidden", "true");
+        cell.append(value, stars);
+        this.setCellLetter(cell, letter);
         fragment.append(cell);
         this.letterCells[owner][letterIndex] = cell;
       });
@@ -455,9 +476,9 @@ class PingPongScene {
     }
 
     letters[letterIndex] = nextLetter;
-    const value = this.letterCells[side][letterIndex].querySelector(".letter-cell__value");
-    value.textContent = nextLetter;
-    this.popLetter(value);
+    const cell = this.letterCells[side][letterIndex];
+    this.setCellLetter(cell, nextLetter);
+    this.popLetter(cell.querySelector(".letter-cell__value"));
   }
 
   popLetter(value) {

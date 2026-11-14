@@ -180,6 +180,7 @@ body {
 .letter-cell {
   display: grid;
   place-items: center;
+  align-content: center;
   color: var(--player-color);
   transition: background-color 120ms ease, box-shadow 120ms ease;
 }
@@ -209,6 +210,14 @@ body {
   font-size: 7.4cqw;
   font-weight: 900;
   transition: color 120ms ease, background-color 120ms ease, transform 120ms ease;
+}
+
+.letter-cell__stars {
+  margin-top: -1.2cqw;
+  color: var(--letter-depth);
+  font-size: 2.8cqw;
+  letter-spacing: 0.2cqw;
+  line-height: 1;
 }
 
 .letter-cell.is-current {
