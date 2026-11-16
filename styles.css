@@ -250,15 +250,15 @@ body {
   place-items: center;
   color: var(--letter-depth);
   background: transparent;
-  font-size: 12cqw;
+  font-size: 8.5cqw;
   font-weight: 700;
   transition: color 120ms ease, background-color 120ms ease, transform 120ms ease;
 }
 
 .letter-cell__points {
-  margin-top: -1.4cqw;
+  margin-top: -1cqw;
   color: var(--letter-depth);
-  font-size: 5.4cqw;
+  font-size: 4.2cqw;
   font-weight: 700;
   line-height: 1;
 }
